@@ -14149,21 +14149,26 @@ function renderHistory(){
     var payOpts=Object.keys(PAY_NAMES).map(function(k){return '<option value="'+k+'"'+(s.pay===k?' selected':'')+'>'+PAY_NAMES[k]+'</option>';}).join('');
     var custOpts='<option value="">- ရွေးပါ -</option>'+S.customers.map(function(c){return '<option value="'+c.id+'"'+(s.custId===c.id?' selected':'')+'>'+c.name+'</option>';}).join('')+'<option value="__new__">+ အသစ်ထည့်</option>';
     var custCell='<select class="sel" style="font-size:10px;padding:3px 6px;max-width:105px;" onchange="changeSaleCust('+s.id+',this)">'+custOpts+'</select>';
+    var isCancelled=s.cancelled===true;
     var deliStatusMap={pending:t('deli_pending'),transit:t('deli_transit'),done:t('deli_done'),failed:t('deli_failed')};
     var deliColor={pending:'var(--clr-t2)',transit:'var(--clr-warn)',done:'var(--clr-accent)',failed:'var(--clr-danger)'};
     var ds=s.deliStatus||'';
-    var deliCell=s.pay==='cod'
-      ?'<button onclick="openDeliModal('+s.id+')" style="background:none;border:1px solid var(--clr-border);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;color:'+(deliColor[ds]||'var(--clr-t2)')+';white-space:nowrap;">'+(deliStatusMap[ds]||t('deli_unset'))+'</button>'
-      :'<span style="font-size:10px;color:var(--clr-t3);">-</span>';
-    return '<tr>'
-      +'<td class="mono text-blue">'+s.rNo+'</td>'
+    var deliCell=isCancelled
+      ?'<span style="font-size:10px;color:var(--clr-t3);">-</span>'
+      :'<button onclick="openDeliModal('+s.id+')" style="background:none;border:1px solid var(--clr-border);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;color:'+(deliColor[ds]||'var(--clr-t2)')+';white-space:nowrap;">'+(deliStatusMap[ds]||t('deli_unset'))+'</button>';
+    var cancelledBadge=isCancelled?'<span style="margin-left:5px;font-size:9px;font-weight:700;color:var(--clr-danger);background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:4px;padding:1px 5px;vertical-align:middle;">CANCELLED</span>':'';
+    var rNoStyle=isCancelled?'text-decoration:line-through;opacity:0.5;':'';
+    var totalStyle=isCancelled?'text-decoration:line-through;opacity:0.5;':'';
+    var rowStyle=isCancelled?'opacity:0.65;background:rgba(239,68,68,.03);':'';
+    return '<tr style="'+rowStyle+'">'
+      +'<td class="mono text-blue" style="'+rNoStyle+'">'+s.rNo+cancelledBadge+'</td>'
       +'<td style="font-size:10px;color:var(--clr-t2);">'+d.toLocaleDateString('en-GB')+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</td>'
-      +'<td>'+custCell+'</td>'
+      +'<td>'+(isCancelled?'<span style="font-size:10px;color:var(--clr-t3);">'+(cust?cust.name:'-')+'</span>':custCell)+'</td>'
       +'<td style="font-size:10px;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+items+'</td>'
-      +'<td><select class="sel" style="font-size:10px;padding:3px 6px;" onchange="changePayMethod('+s.id+',this.value)">'+payOpts+'</select></td>'
+      +'<td>'+(isCancelled?'<span style="font-size:10px;color:var(--clr-t3);">'+( Object.keys(PAY_NAMES).indexOf(s.pay)>=0?PAY_NAMES[s.pay]:s.pay||'-')+'</span>':'<select class="sel" style="font-size:10px;padding:3px 6px;" onchange="changePayMethod('+s.id+',this.value)">'+payOpts+'</select>')+'</td>'
       +'<td>'+deliCell+'</td>'
       +'<td class="text-danger">'+((s.disc||0)>0?'-'+f(s.disc)+' '+t('kyat'):'-')+'</td>'
-      +'<td class="mono text-accent">'+f(s.total||0)+' ကျပ်</td>'
+      +'<td class="mono" style="color:var(--clr-t3);'+totalStyle+'">'+f(s.total||0)+' ကျပ်</td>'
       +'<td><button class="btn btn-ghost btn-sm" onclick="showReceiptById('+s.id+')">🧾</button></td>'
       +'</tr>';
   }).join('');
