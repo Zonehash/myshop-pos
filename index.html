@@ -14169,7 +14169,7 @@ function renderHistory(){
       +'<td>'+deliCell+'</td>'
       +'<td class="text-danger">'+((s.disc||0)>0?'-'+f(s.disc)+' '+t('kyat'):'-')+'</td>'
       +'<td class="mono" style="color:var(--clr-t3);'+totalStyle+'">'+f(s.total||0)+' ကျပ်</td>'
-      +'<td><button class="btn btn-ghost btn-sm" onclick="showReceiptById('+s.id+')">🧾</button></td>'
+      +'<td style="white-space:nowrap;"><button class="btn btn-ghost btn-sm" onclick="showReceiptById('+s.id+')">🧾</button>'+(isCancelled?'':'<button class="btn btn-sm" onclick="cancelSale('+s.id+')" style="margin-left:4px;background:rgba(239,68,68,.1);color:var(--clr-danger);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;">❌</button>')+'</td>'
       +'</tr>';
   }).join('');
 }
@@ -14421,6 +14421,15 @@ function genQR(saleId){
       new QRCode(target,{text:encodeQR(saleId),width:155,height:155,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
     }catch(e){console.error('QR error:',e);}
   },200);
+}
+
+function cancelSale(id){
+  var sale=S.sales.find(function(s){return s.id===id;});
+  if(!sale)return;
+  if(!confirm('⚠️ '+sale.rNo+' ကို Cancelled လုပ်မည်။\nဤလုပ်ဆောင်ချက်ကို ပြန်မပြောင်းနိုင်ပါ။\nဆက်လုပ်မည်လား?'))return;
+  sale.cancelled=true;
+  sale.cancelledAt=new Date().toISOString();
+  save();renderHistory();notif('❌ '+sale.rNo+' Cancelled လုပ်ပြီး','ok');
 }
 
 function changePayMethod(id,method){
