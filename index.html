@@ -14648,7 +14648,7 @@ function savePrintSettings(){
 }
 
 // ===== PRINTER MANAGEMENT =====
-var _printerConn={type:null,name:'',device:null,usbDevice:null};
+var _printerConn={type:null,name:'',device:null,btChar:null,usbDevice:null,usbInterface:null,usbOutEndpoint:null};
 var _pairedPrinters=[];  // [{type:'bt'|'usb'|'manual', name:'...'}]
 
 // ── Status display ──────────────────────────────────────────
@@ -14782,14 +14782,35 @@ function connectBluetoothPrinter(){
     acceptAllDevices:true,
     optionalServices:[
       '000018f0-0000-1000-8000-00805f9b34fb', // Serial Port Profile (common for BT printers)
-      '00001101-0000-1000-8000-00805f9b34fb', // SPP
-      '0000ff00-0000-1000-8000-00805f9b34fb'  // Generic
+      '0000ff00-0000-1000-8000-00805f9b34fb', // Generic
+      'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+      '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+      '49535343-1e4d-4bd9-ba61-23c647249616'
     ]
-  }).then(function(device){
+  }).then(async function(device){
+    var char=null;
+    var server=await device.gatt.connect();
+    var services=await server.getPrimaryServices();
+    for (var s=0;s<services.length;s++){
+      try{
+        var chars=await services[s].getCharacteristics();
+        for (var c=0;c<chars.length;c++){
+          if(chars[c].properties.write||chars[c].properties.writeWithoutResponse){
+            char=chars[c];
+            break;
+          }
+        }
+      }catch(e){}
+      if(char)break;
+    }
+    if(!char){
+      throw new Error('Printer write characteristic မတွေ့ပါ');
+    }
     var name=device.name||device.id||'Bluetooth Printer';
     _printerConn.type='bt';
     _printerConn.name=name;
     _printerConn.device=device;
+    _printerConn.btChar=char;
     if(!S.print)S.print={};
     S.print.printerName=name;
     S.print.printerType='bt';
@@ -14801,7 +14822,7 @@ function connectBluetoothPrinter(){
     // Listen for disconnect
     device.addEventListener('gattserverdisconnected',function(){
       if(_printerConn.name===name){
-        _printerConn.type=null;_printerConn.name='';_printerConn.device=null;
+        _printerConn.type=null;_printerConn.name='';_printerConn.device=null;_printerConn.btChar=null;
         updatePrinterDisplay();
         notif('🔵 Bluetooth Printer ဆက်သွယ်မှု ပြတ်သွားသည်','warn');
       }
@@ -14836,12 +14857,41 @@ function connectUSBPrinter(){
       {vendorId:0x0416},         // Winbond (common POS)
       {vendorId:0x154f}          // SNBC
     ]
-  }).then(function(device){
+  }).then(async function(device){
+    await device.open();
+    if(device.configuration===null){
+      await device.selectConfiguration(1);
+    }
+    var outEp=null;
+    var claimIntf=null;
+    var interfaces=(device.configuration&&device.configuration.interfaces)||[];
+    for (var i=0;i<interfaces.length;i++){
+      var intf=interfaces[i];
+      var alts=intf.alternates||[];
+      for (var a=0;a<alts.length;a++){
+        var eps=alts[a].endpoints||[];
+        for (var e=0;e<eps.length;e++){
+          if(eps[e].direction==='out'){
+            outEp=eps[e].endpointNumber;
+            claimIntf=intf.interfaceNumber;
+            break;
+          }
+        }
+        if(outEp!==null)break;
+      }
+      if(outEp!==null)break;
+    }
+    if(claimIntf===null||outEp===null){
+      throw new Error('USB printer output endpoint မတွေ့ပါ');
+    }
+    await device.claimInterface(claimIntf);
     var name=(device.manufacturerName||'')+(device.productName?' — '+device.productName:'');
     if(!name.trim())name='USB Printer ('+device.vendorId.toString(16).toUpperCase()+':'+device.productId.toString(16).toUpperCase()+')';
     _printerConn.type='usb';
     _printerConn.name=name;
     _printerConn.usbDevice=device;
+    _printerConn.usbInterface=claimIntf;
+    _printerConn.usbOutEndpoint=outEp;
     if(!S.print)S.print={};
     S.print.printerName=name;
     S.print.printerType='usb';
@@ -14869,7 +14919,15 @@ function disconnectPrinter(){
       }
     }catch(e){}
   }
-  _printerConn={type:null,name:'',device:null,usbDevice:null};
+  if(_printerConn.usbDevice){
+    try{
+      if(_printerConn.usbInterface!==null){
+        _printerConn.usbDevice.releaseInterface(_printerConn.usbInterface).catch(function(){});
+      }
+      _printerConn.usbDevice.close().catch(function(){});
+    }catch(e){}
+  }
+  _printerConn={type:null,name:'',device:null,btChar:null,usbDevice:null,usbInterface:null,usbOutEndpoint:null};
   if(S.print){S.print.printerName='';S.print.printerType='';}
   var inp=document.getElementById('p-printer-name');
   if(inp)inp.value='';
