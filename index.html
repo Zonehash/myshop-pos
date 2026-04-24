@@ -108,7 +108,7 @@ window.fbSignIn = async function(){
 
 window.fbSignOut = async function(){
   await signOut(auth);
-  S = {products:[],categories:[],sales:[],customers:[],cart:[],settings:{shopName:'MyShop',phone:'09-000-000',address:'ရန်ကုန်မြို့',tin:''},receipt:{header:'',footer:'ကျေးဇူးတင်ပါသည်! ပြန်လာပါဦး 😊',extra:'',logo:'🛒',showTax:false,taxPct:0},print:{paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true},pay:'',lang:'my',lightMode:false,rPeriod:'today'};
+  S = {products:[],categories:[],sales:[],customers:[],cart:[],settings:{shopName:'MyShop',phone:'09-000-000',address:'ရန်ကုန်မြို့',tin:''},receipt:{header:'',footer:'ကျေးဇူးတင်ပါသည်! ပြန်လာပါဦး 😊',extra:'',logo:'🛒',showTax:false,taxPct:0},print:{paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true,printerModel:'Other model',interface:'bluetooth',ipAddress:'',printMode:'graphic',printWidth:'72 mm',printResolution:'203 dpi (8 dots/mm)',escposInitCmd:'',escposCutCmd:'1D,56,42,00',escposDrawerCmd:'1B,70,00,19,FA'},pay:'',lang:'my',lightMode:false,rPeriod:'today'};
 };
 
 function fbErrMsg(code){
@@ -12986,7 +12986,7 @@ var S = {
   pay:'', editProd:null, editCust:null, rPeriod:'today',
   settings:{shopName:'MyShop',phone:'09-000-000',address:'ရန်ကုန်မြို့',tin:''},
   receipt:{header:'',footer:'ကျေးဇူးတင်ပါသည်! ပြန်လာပါဦး 😊',extra:'',logo:'🛒',showTax:false,taxPct:0},
-  print:{paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true}
+  print:{paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true,printerModel:'Other model',interface:'bluetooth',ipAddress:'',printMode:'graphic',printWidth:'72 mm',printResolution:'203 dpi (8 dots/mm)',escposInitCmd:'',escposCutCmd:'1D,56,42,00',escposDrawerCmd:'1B,70,00,19,FA'}
 };
 var tempImg = '';
 
@@ -13026,7 +13026,7 @@ function load(){
     if(d){
       var p=JSON.parse(d);
       Object.assign(S,p);
-      if(p.print)S.print=Object.assign({paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true},p.print);
+      if(p.print)S.print=Object.assign({paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true,printerModel:'Other model',interface:'bluetooth',ipAddress:'',printMode:'graphic',printWidth:'72 mm',printResolution:'203 dpi (8 dots/mm)',escposInitCmd:'',escposCutCmd:'1D,56,42,00',escposDrawerCmd:'1B,70,00,19,FA'},p.print);
     }
   }catch(e){}
 }
@@ -13986,16 +13986,6 @@ async function printConnectedReceipt(sale){
 function printR(){
   var previewEl=document.getElementById('receipt-preview-live');
   if(!previewEl||!previewEl.innerHTML)return;
-  if(currentSale&&_printerConn&&_printerConn.type){
-    printConnectedReceipt(currentSale).then(function(ok){
-      if(ok){notif('🖨️ Printer သို့ ပေးပို့ပြီး','ok');}
-      else{notif('⚠️ Connected printer မတွေ့၊ Browser print သို့ ပြောင်းမည်','warn');window.print();}
-    }).catch(function(e){
-      notif('✗ Printer error: '+(e&&e.message?e.message:e),'err');
-      window.print();
-    });
-    return;
-  }
   var P=S.print||{};
   var pw=(P.paperWidth===58)?'58mm':'80mm';
   var fs=P.fontSize||'medium';
