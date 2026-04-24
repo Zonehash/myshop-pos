@@ -13927,9 +13927,75 @@ function printAndReset(){printR();resetAfterReceipt();}
 
 function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+function _escInit(){return [0x1B,0x40,0x1B,0x74,0x00];}
+function _escLf(n){var a=[];for(var i=0;i<(n||1);i++)a.push(0x0A);return a;}
+function _escText(s){return Array.from(new TextEncoder().encode((s||'')+''));}
+function _escLine(ch,n){return _escText(new Array(n||32).fill(ch||'-').join(''));}
+function _escRow(l,r,w){
+  l=(l||'')+'';r=(r||'')+'';
+  var sp=(w||32)-l.length-r.length;if(sp<1)sp=1;
+  return l+new Array(sp+1).join(' ')+r;
+}
+function buildEscPosBytesFromSale(sale){
+  var bytes=[].concat(_escInit());
+  var w=(S.print&&S.print.paperWidth===58)?32:42;
+  bytes=bytes.concat(_escText((S.settings&&S.settings.shopName)||'MyShop'),_escLf());
+  if(S.settings&&S.settings.phone)bytes=bytes.concat(_escText(S.settings.phone),_escLf());
+  if(S.settings&&S.settings.address)bytes=bytes.concat(_escText(S.settings.address),_escLf());
+  bytes=bytes.concat(_escLine('-',w),_escLf());
+  bytes=bytes.concat(_escText(_escRow('Receipt#:',sale.rNo||'',w)),_escLf());
+  bytes=bytes.concat(_escText(_escRow('Date:',(sale.date||'').slice(0,16).replace('T',' '),w)),_escLf());
+  if(sale.custName)bytes=bytes.concat(_escText(_escRow('Customer:',sale.custName,w)),_escLf());
+  bytes=bytes.concat(_escLine('-',w),_escLf());
+  (sale.items||[]).forEach(function(it){
+    var nm=(it.name||'').toString();
+    bytes=bytes.concat(_escText(nm),_escLf());
+    bytes=bytes.concat(_escText(_escRow('  '+(it.qty||0)+' x '+f(it.price||0),f((it.price||0)*(it.qty||0)),w)),_escLf());
+  });
+  bytes=bytes.concat(_escLine('-',w),_escLf());
+  bytes=bytes.concat(_escText(_escRow('TOTAL',f(sale.total||0)+' Ks',w)),_escLf());
+  bytes=bytes.concat(_escLine('=',w),_escLf());
+  bytes=bytes.concat(_escText(_escRow('Payment:',(PAY_NAMES[sale.pay]||sale.pay||''),w)),_escLf());
+  if(sale.note)bytes=bytes.concat(_escText('Note: '+sale.note),_escLf());
+  bytes=bytes.concat(_escLf(3),[0x1D,0x56,0x41,0x05]);
+  return new Uint8Array(bytes);
+}
+async function printConnectedReceipt(sale){
+  if(!_printerConn||!_printerConn.type)return false;
+  var data=buildEscPosBytesFromSale(sale||{});
+  if(_printerConn.type==='usb'&&_printerConn.usbDevice&&_printerConn.usbOutEndpoint!==null){
+    await _printerConn.usbDevice.transferOut(_printerConn.usbOutEndpoint,data);
+    return true;
+  }
+  if(_printerConn.type==='bt'&&_printerConn.btChar){
+    var chunk=180;
+    for(var i=0;i<data.length;i+=chunk){
+      var sl=data.slice(i,Math.min(i+chunk,data.length));
+      if(_printerConn.btChar.properties&&_printerConn.btChar.properties.writeWithoutResponse){
+        await _printerConn.btChar.writeValueWithoutResponse(sl);
+      } else {
+        await _printerConn.btChar.writeValue(sl);
+      }
+      await new Promise(function(r){setTimeout(r,20);});
+    }
+    return true;
+  }
+  return false;
+}
+
 function printR(){
   var previewEl=document.getElementById('receipt-preview-live');
   if(!previewEl||!previewEl.innerHTML)return;
+  if(currentSale&&_printerConn&&_printerConn.type){
+    printConnectedReceipt(currentSale).then(function(ok){
+      if(ok){notif('🖨️ Printer သို့ ပေးပို့ပြီး','ok');}
+      else{notif('⚠️ Connected printer မတွေ့၊ Browser print သို့ ပြောင်းမည်','warn');window.print();}
+    }).catch(function(e){
+      notif('✗ Printer error: '+(e&&e.message?e.message:e),'err');
+      window.print();
+    });
+    return;
+  }
   var P=S.print||{};
   var pw=(P.paperWidth===58)?'58mm':'80mm';
   var fs=P.fontSize||'medium';
