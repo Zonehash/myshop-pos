@@ -12612,6 +12612,68 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         </label>
       </div>
 
+      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:14px;">Create printer</div>
+      <div class="fg"><label style="font-size:11px;">Name</label><input class="inp" id="p-name" placeholder="Printer name..." style="font-size:11px;"></div>
+      <div class="fg">
+        <label style="font-size:11px;">Printer model</label>
+        <select class="sel" id="p-model">
+          <option>No printer</option>
+          <option>Star TSP654IIBI (Bluetooth)</option>
+          <option>Star TSP143IIILAN (Ethernet)</option>
+          <option>Star mPOP (Bluetooth)</option>
+          <option>Star mC-Print3</option>
+          <option>Epson TM-T20II (Ethernet)</option>
+          <option>Epson TM-T88V (Ethernet)</option>
+          <option>Epson TM-m30</option>
+          <option>Sunmi</option>
+          <option>Posiflex 6900</option>
+          <option>XPrinter XP-Q800</option>
+          <option>GP-58130IIC</option>
+          <option>GP-U80300I</option>
+          <option>GP-L80250I</option>
+          <option>Other model</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label style="font-size:11px;">Interface</label>
+        <select class="sel" id="p-interface" onchange="togglePrintInterfaceFields()">
+          <option value="bluetooth">bluetooth</option>
+          <option value="usb">usb</option>
+          <option value="ethernet">ethernet</option>
+        </select>
+      </div>
+      <div class="fg" id="p-ip-wrap" style="display:none;">
+        <label style="font-size:11px;">Printer IP address</label>
+        <input class="inp" id="p-ip-address" placeholder="192.168.1.100" style="font-size:11px;">
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:14px;">Advanced settings</div>
+      <div class="fg">
+        <label style="font-size:11px;">Print mode</label>
+        <select class="sel" id="p-mode">
+          <option value="graphic">graphic</option>
+          <option value="text">text</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label style="font-size:11px;">Print width</label>
+        <select class="sel" id="p-width">
+          <option>58 mm</option>
+          <option selected>72 mm</option>
+          <option>80 mm</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label style="font-size:11px;">Print resolution</label>
+        <select class="sel" id="p-resolution">
+          <option>203 dpi (8 dots/mm)</option>
+          <option>180 dpi (7 dots/mm)</option>
+        </select>
+      </div>
+      <div class="fg"><label style="font-size:11px;">Initial ESC/POS commands</label><input class="inp" id="p-esc-init" placeholder="1B,40" style="font-size:11px;"></div>
+      <div class="fg"><label style="font-size:11px;">Cutter ESC/POS commands</label><input class="inp" id="p-esc-cut" placeholder="1D,56,42,00" style="font-size:11px;"></div>
+      <div class="fg"><label style="font-size:11px;">Drawer ESC/POS commands</label><input class="inp" id="p-esc-drawer" placeholder="1B,70,00,19,FA" style="font-size:11px;"></div>
+
       <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:14px;">🖨️ Printer ချိတ်ဆက်မှု</div>
 
       <!-- Active connection status -->
@@ -14685,6 +14747,17 @@ function loadSettings(){
   document.getElementById('p-show-qr').checked=P.showQR!==false;
   document.getElementById('p-show-note').checked=P.showNote!==false;
   document.getElementById('p-printer-name').value=P.printerName||'';
+  document.getElementById('p-name').value=P.printerName||'';
+  document.getElementById('p-model').value=P.printerModel||'Other model';
+  document.getElementById('p-interface').value=P.interface||'bluetooth';
+  document.getElementById('p-ip-address').value=P.ipAddress||'';
+  document.getElementById('p-mode').value=P.printMode||'graphic';
+  document.getElementById('p-width').value=P.printWidth||'72 mm';
+  document.getElementById('p-resolution').value=P.printResolution||'203 dpi (8 dots/mm)';
+  document.getElementById('p-esc-init').value=P.escposInitCmd||'';
+  document.getElementById('p-esc-cut').value=P.escposCutCmd||'1D,56,42,00';
+  document.getElementById('p-esc-drawer').value=P.escposDrawerCmd||'1B,70,00,19,FA';
+  togglePrintInterfaceFields();
   updatePrinterDisplay();
 }
 
@@ -14699,8 +14772,24 @@ function savePrintSettings(){
   S.print.showCustName=document.getElementById('p-show-cust').checked;
   S.print.showQR=document.getElementById('p-show-qr').checked;
   S.print.showNote=document.getElementById('p-show-note').checked;
-  S.print.printerName=document.getElementById('p-printer-name').value.trim();
+  S.print.printerName=document.getElementById('p-name').value.trim()||document.getElementById('p-printer-name').value.trim();
+  S.print.printerModel=document.getElementById('p-model').value;
+  S.print.interface=document.getElementById('p-interface').value;
+  S.print.ipAddress=document.getElementById('p-ip-address').value.trim();
+  S.print.printMode=document.getElementById('p-mode').value;
+  S.print.printWidth=document.getElementById('p-width').value;
+  S.print.printResolution=document.getElementById('p-resolution').value;
+  S.print.escposInitCmd=document.getElementById('p-esc-init').value.trim();
+  S.print.escposCutCmd=document.getElementById('p-esc-cut').value.trim();
+  S.print.escposDrawerCmd=document.getElementById('p-esc-drawer').value.trim();
+  document.getElementById('p-printer-name').value=S.print.printerName||'';
   save();updatePrinterDisplay();notif('🖨️ Print ဆက်တင် သိမ်းပြီ','ok');
+}
+
+function togglePrintInterfaceFields(){
+  var v=(document.getElementById('p-interface')||{}).value||'bluetooth';
+  var wrap=document.getElementById('p-ip-wrap');
+  if(wrap)wrap.style.display=(v==='ethernet')?'block':'none';
 }
 
 // ===== PRINTER MANAGEMENT =====
