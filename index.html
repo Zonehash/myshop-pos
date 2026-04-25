@@ -579,6 +579,40 @@ body.light-mode .sel:focus { background: #fff; }
   gap: 10px;
 }
 
+.settings-stack {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.settings-stack .card {
+  margin-bottom: 0;
+}
+
+.settings-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--clr-border);
+  background: transparent;
+  color: var(--clr-t1);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.settings-nav-item:hover {
+  background: var(--clr-s2);
+}
+
 /* =============================================
    BADGES
    ============================================= */
@@ -12456,288 +12490,61 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div class="page-title" data-i18n="set_page_title">⚙️ ဆက်တင်</div>
     <button class="btn btn-primary" onclick="saveSettings()" data-i18n="set_save">💾 သိမ်းမည်</button>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:880px;flex:1;overflow-y:auto;">
-
-    <!-- Shop Info -->
-    <div class="card" style="padding:16px;">
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;" data-i18n="set_shop_section">🏪 ဆိုင်အချက်အလက်</div>
-      <div class="fg"><label data-i18n="set_shop_name">ဆိုင်အမည်</label><input class="inp" id="s-name" placeholder="MyShop"></div>
-      <div class="fg"><label data-i18n="set_phone">ဖုန်းနံပါတ်</label><input class="inp" id="s-phone" placeholder="09-xxx-xxx"></div>
-      <div class="fg"><label data-i18n="set_addr">လိပ်စာ</label><input class="inp" id="s-addr" placeholder="ရပ်ကွက်၊ မြို့နယ်"></div>
-      <div class="fg"><label data-i18n="set_tin">TIN နံပါတ်</label><input class="inp" id="s-tin" placeholder="TIN-xxxxx (ရှိရင်)"></div>
-
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:11px;margin-top:4px;">🎨 Gradient Color Theme</div>
-      <!-- Gradient preview bar -->
-      <div id="grad-preview-bar" style="height:10px;border-radius:99px;margin-bottom:14px;transition:background 0.3s;background:linear-gradient(135deg,#a78bfa,#7c3aed);"></div>
-      <!-- Gradient presets -->
-      <div style="font-size:9px;font-weight:700;color:var(--clr-t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Gradient Presets</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-        <button onclick="applyGradientPreset('#a78bfa','#7c3aed')" title="Violet (Default)"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#a78bfa,#7c3aed);border:2px solid rgba(167,139,250,.5);cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#818cf8','#4338ca')" title="Indigo"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#4338ca);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#60a5fa','#2563eb')" title="Blue"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#60a5fa,#2563eb);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#38bdf8','#0284c7')" title="Sky"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#38bdf8,#0284c7);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#34d399','#059669')" title="Emerald"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#34d399,#059669);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#fb7185','#e11d48')" title="Rose"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#fb7185,#e11d48);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#f0abfc','#a21caf')" title="Pink/Purple"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#f0abfc,#a21caf);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#fbbf24','#d97706')" title="Amber"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#fbbf24,#d97706);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-        <button onclick="applyGradientPreset('#fb923c','#ea580c')" title="Orange"
-          style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#fb923c,#ea580c);border:2px solid transparent;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''"></button>
-      </div>
-      <!-- Custom gradient pickers -->
-      <div style="font-size:9px;font-weight:700;color:var(--clr-t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Custom Gradient</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-          <span style="font-size:9px;color:var(--clr-t3);">From</span>
-          <input type="color" id="color-accent" value="#a78bfa" oninput="onGradientChange()"
-            style="width:38px;height:38px;border:2px solid var(--clr-border);border-radius:10px;cursor:pointer;padding:2px;background:var(--clr-s2);">
-        </div>
-        <div style="flex:1;height:3px;border-radius:99px;background:var(--grad-accent);"></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-          <span style="font-size:9px;color:var(--clr-t3);">To</span>
-          <input type="color" id="color-accent2" value="#7c3aed" oninput="onGradientChange()"
-            style="width:38px;height:38px;border:2px solid var(--clr-border);border-radius:10px;cursor:pointer;padding:2px;background:var(--clr-s2);">
-        </div>
+  <div class="settings-stack">
+    <div id="settings-menu" class="card">
+      <div class="card-hd">Settings Menu</div>
+      <div style="padding:10px 0;">
+        <button class="settings-nav-item" onclick="openSettingsSection('shop')"><span>🏪 Shop Profile</span><span>›</span></button>
+        <button class="settings-nav-item" onclick="openSettingsSection('receipt')"><span>🧾 Receipt Design</span><span>›</span></button>
+        <button class="settings-nav-item" onclick="openSettingsSection('appearance')"><span>🎨 Appearance</span><span>›</span></button>
       </div>
     </div>
 
-    <!-- Receipt Settings -->
-    <div class="card" style="padding:16px;">
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;" data-i18n="set_receipt_section">🧾 Receipt ပြင်ဆင်</div>
-      <div class="fg">
-        <label data-i18n="set_logo">Logo</label>
-        <div style="display:flex;gap:9px;align-items:flex-start;">
-          <div id="logo-prev-wrap" style="width:60px;height:60px;border:1px solid var(--clr-border);border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--clr-s2);flex-shrink:0;overflow:hidden;">
-            <span id="logo-prev-emoji" style="font-size:26px;">🛒</span>
-            <img id="logo-prev-img" style="display:none;width:100%;height:100%;object-fit:contain;">
-          </div>
-          <div style="flex:1;">
-            <div style="display:flex;gap:5px;margin-bottom:5px;">
-              <input class="inp" id="r-logo-emoji" placeholder="Emoji (🛒 🏪 ...)" style="flex:1;font-size:16px;" oninput="previewLogo()">
-              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('r-logo-file').click()">🖼️</button>
-              <input type="file" id="r-logo-file" accept="image/*" style="display:none" onchange="handleLogoImg(event)">
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="clearLogo()" style="font-size:9px;" data-i18n="set_logo_del">ဖျက်မည်</button>
-          </div>
-        </div>
-      </div>
-      <div class="fg"><label data-i18n="set_header">Header စာ</label><textarea class="r-edit-field" id="r-header" rows="2" placeholder="ဆိုင်ဆောင်ပုဒ် / ကြော်ငြာ..."></textarea></div>
-      <div class="fg"><label data-i18n="set_footer">Footer စာ</label><textarea class="r-edit-field" id="r-footer" rows="2" placeholder="ကျေးဇူးတင်ပါသည်..."></textarea></div>
-      <div class="fg"><label data-i18n="set_extra">Extra Info</label><textarea class="r-edit-field" id="r-extra" rows="2" placeholder="ဆိုင်ဖွင့်ချိန် ၈နာရီ - ၁၀နာရီ&#10;FB: MyShop"></textarea></div>
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px;">
-        <input type="checkbox" id="r-show-tax" style="accent-color:var(--clr-accent);width:13px;height:13px;">
-        <span style="font-size:11px;" data-i18n="set_tax">Tax ပြမည်</span>
-        <input class="inp" id="r-tax-pct" type="number" placeholder="%" min="0" max="100" style="width:66px;">
-        <span style="font-size:10px;color:var(--clr-t2);">%</span>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="previewReceipt()" data-i18n="set_preview">👁️ Receipt Preview</button>
-    </div>
-
-    <!-- Print Settings -->
-    <div class="card" style="padding:16px;">
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:13px;">🖨️ Print ချိန်ညှိ</div>
-
-      <!-- Paper Width -->
-      <div class="fg">
-        <label style="font-size:11px;">စာရွက်အကျယ် (Paper Width)</label>
-        <div style="display:flex;gap:10px;margin-top:4px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
-            <input type="radio" name="pw" id="pw-58" value="58" style="accent-color:var(--clr-accent);">
-            <span>58mm</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
-            <input type="radio" name="pw" id="pw-80" value="80" checked style="accent-color:var(--clr-accent);">
-            <span>80mm <span style="font-size:9px;color:var(--clr-t2);">(ပုံမှန်)</span></span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Font Size -->
-      <div class="fg">
-        <label style="font-size:11px;">စာလုံးအရွယ် (Font Size)</label>
-        <div style="display:flex;gap:10px;margin-top:4px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
-            <input type="radio" name="pfs" id="pfs-small" value="small" style="accent-color:var(--clr-accent);">
-            <span>သေး (S)</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
-            <input type="radio" name="pfs" id="pfs-medium" value="medium" checked style="accent-color:var(--clr-accent);">
-            <span>အလတ် (M)</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
-            <input type="radio" name="pfs" id="pfs-large" value="large" style="accent-color:var(--clr-accent);">
-            <span>ကြီး (L)</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Copies -->
-      <div class="fg" style="display:flex;align-items:center;gap:10px;">
-        <label style="font-size:11px;white-space:nowrap;">မိတ္တူ (Copies)</label>
-        <input type="number" id="p-copies" class="inp" min="1" max="9" value="1" style="width:60px;text-align:center;">
-        <span style="font-size:10px;color:var(--clr-t2);">ထုတ်ရမည့် အရေအတွက်</span>
-      </div>
-
-      <!-- Auto Print -->
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px;">
-        <input type="checkbox" id="p-autoprint" style="accent-color:var(--clr-accent);width:14px;height:14px;">
-        <span style="font-size:11px;">Sale ပြီးတိုင်း အလိုအလျောက် Print မည်</span>
-      </div>
-
-      <!-- Show/Hide Sections -->
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:4px;">ဘာတွေပြမည်</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;">
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;">
-          <input type="checkbox" id="p-show-saleid" checked style="accent-color:var(--clr-accent);width:13px;height:13px;">
-          <span>Receipt No / Sale ID</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;">
-          <input type="checkbox" id="p-show-cust" checked style="accent-color:var(--clr-accent);width:13px;height:13px;">
-          <span>ဖောက်သည် အချက်အလက်</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;">
-          <input type="checkbox" id="p-show-qr" checked style="accent-color:var(--clr-accent);width:13px;height:13px;">
-          <span>QR Code</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;">
-          <input type="checkbox" id="p-show-note" checked style="accent-color:var(--clr-accent);width:13px;height:13px;">
-          <span>မှတ်ချက် (Note)</span>
-        </label>
-      </div>
-
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:14px;">Create printer</div>
-      <div class="fg"><label style="font-size:11px;">Name</label><input class="inp" id="p-name" placeholder="Printer name..." style="font-size:11px;"></div>
-      <div class="fg">
-        <label style="font-size:11px;">Printer model</label>
-        <select class="sel" id="p-model">
-          <option>No printer</option>
-          <option>Star TSP654IIBI (Bluetooth)</option>
-          <option>Star TSP143IIILAN (Ethernet)</option>
-          <option>Star mPOP (Bluetooth)</option>
-          <option>Star mC-Print3</option>
-          <option>Epson TM-T20II (Ethernet)</option>
-          <option>Epson TM-T88V (Ethernet)</option>
-          <option>Epson TM-m30</option>
-          <option>Sunmi</option>
-          <option>Posiflex 6900</option>
-          <option>XPrinter XP-Q800</option>
-          <option>GP-58130IIC</option>
-          <option>GP-U80300I</option>
-          <option>GP-L80250I</option>
-          <option>Other model</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label style="font-size:11px;">Interface</label>
-        <select class="sel" id="p-interface" onchange="togglePrintInterfaceFields()">
-          <option value="bluetooth">bluetooth</option>
-          <option value="usb">usb</option>
-          <option value="ethernet">ethernet</option>
-        </select>
-      </div>
-      <div class="fg" id="p-ip-wrap" style="display:none;">
-        <label style="font-size:11px;">Printer IP address</label>
-        <input class="inp" id="p-ip-address" placeholder="192.168.1.100" style="font-size:11px;">
-      </div>
-
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:14px;">Advanced settings</div>
-      <div class="fg">
-        <label style="font-size:11px;">Print mode</label>
-        <select class="sel" id="p-mode">
-          <option value="graphic">graphic</option>
-          <option value="text">text</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label style="font-size:11px;">Print width</label>
-        <select class="sel" id="p-width">
-          <option>58 mm</option>
-          <option selected>72 mm</option>
-          <option>80 mm</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label style="font-size:11px;">Print resolution</label>
-        <select class="sel" id="p-resolution">
-          <option>203 dpi (8 dots/mm)</option>
-          <option>180 dpi (7 dots/mm)</option>
-        </select>
-      </div>
-      <div class="fg"><label style="font-size:11px;">Initial ESC/POS commands</label><input class="inp" id="p-esc-init" placeholder="1B,40" style="font-size:11px;"></div>
-      <div class="fg"><label style="font-size:11px;">Cutter ESC/POS commands</label><input class="inp" id="p-esc-cut" placeholder="1D,56,42,00" style="font-size:11px;"></div>
-      <div class="fg"><label style="font-size:11px;">Drawer ESC/POS commands</label><input class="inp" id="p-esc-drawer" placeholder="1B,70,00,19,FA" style="font-size:11px;"></div>
-
-      <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;margin-top:14px;">🖨️ Printer ချိတ်ဆက်မှု</div>
-
-      <!-- Active connection status -->
-      <div id="printer-conn-status" style="display:none;border-radius:8px;padding:9px 11px;margin-bottom:9px;align-items:center;gap:9px;">
-        <div id="pcs-dot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;"></div>
-        <div style="flex:1;min-width:0;">
-          <div id="pcs-label" style="font-size:9px;color:var(--clr-t2);"></div>
-          <div id="pcs-name" style="font-size:12px;font-weight:700;color:var(--clr-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
-        </div>
-        <button id="pcs-disconnect-btn" onclick="disconnectPrinter()" style="background:none;border:1px solid var(--clr-border);border-radius:6px;cursor:pointer;font-size:10px;padding:3px 8px;color:var(--clr-t2);">ဖြုတ်မည်</button>
-      </div>
-
-      <!-- Connect buttons row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;">
-        <!-- Bluetooth -->
-        <button id="bt-connect-btn" onclick="connectBluetoothPrinter()"
-          style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 7px;
-                 border:1.5px solid var(--clr-border);border-radius:10px;background:var(--clr-s2);
-                 cursor:pointer;transition:all .18s;">
-          <span style="font-size:20px;">🔵</span>
-          <span style="font-size:10px;font-weight:700;color:var(--clr-t1);">Bluetooth</span>
-          <span id="bt-status-lbl" style="font-size:9px;color:var(--clr-t3);">ချိတ်မည်</span>
-        </button>
-        <!-- USB -->
-        <button id="usb-connect-btn" onclick="connectUSBPrinter()"
-          style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 7px;
-                 border:1.5px solid var(--clr-border);border-radius:10px;background:var(--clr-s2);
-                 cursor:pointer;transition:all .18s;">
-          <span style="font-size:20px;">🔌</span>
-          <span style="font-size:10px;font-weight:700;color:var(--clr-t1);">USB</span>
-          <span id="usb-status-lbl" style="font-size:9px;color:var(--clr-t3);">ချိတ်မည်</span>
-        </button>
-      </div>
-
-      <!-- Previously paired devices -->
-      <div id="printer-paired-list" style="display:none;margin-bottom:9px;">
-        <div style="font-size:9px;color:var(--clr-t2);margin-bottom:5px;">📋 ယခင် ချိတ်ဆက်ဖူးသော Printer များ</div>
-        <div id="printer-paired-items" style="display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;"></div>
-      </div>
-
-      <!-- Manual fallback -->
-      <div style="border-top:1px solid var(--clr-border);padding-top:9px;margin-top:2px;">
-        <div style="font-size:9px;color:var(--clr-t2);margin-bottom:5px;">✏️ Printer အမည် ကိုယ်တိုင် ထည့်မည် (ကွန်ပျူတာမှ ချိတ်ထားလျှင်)</div>
-        <div style="display:flex;gap:6px;margin-bottom:7px;">
-          <input class="inp" id="p-printer-name" placeholder="Printer အမည် ရိုက်ထည့်ပါ..." style="flex:1;font-size:11px;" oninput="updatePrinterPreview()">
-          <button class="btn btn-ghost btn-sm" onclick="detectPrinters()" style="white-space:nowrap;">🔍 ရှာမည်</button>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="savePrinterName()">💾 မှတ်မည်</button>
-          <button class="btn btn-ghost btn-sm" onclick="testPrintPage()">🖨️ Test</button>
-        </div>
-      </div>
-
-      <!-- Detected list (manual search results) -->
-      <div id="printer-detected-list" style="display:none;margin-top:8px;">
-        <div style="font-size:9px;color:var(--clr-t2);margin-bottom:5px;">တွေ့ရသော Printer များ — ရွေးချယ်ရန် နှိပ်ပါ</div>
-        <div id="printer-items" style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;"></div>
-      </div>
-
-      <div style="margin-top:11px;">
-        <button class="btn btn-ghost btn-sm" onclick="savePrintSettings()" style="background:var(--grad-accent);color:#fff;border:none;width:100%;">💾 Print ဆက်တင် သိမ်းမည်</button>
+    <div id="settings-sub-shop" class="settings-subpage card" style="display:none;">
+      <div class="card-hd"><button class="btn btn-ghost btn-sm" onclick="backToSettingsMenu()">← Back</button><span>🏪 Shop Profile</span></div>
+      <div style="padding:16px;">
+        <div class="fg"><label data-i18n="set_shop_name">ဆိုင်အမည်</label><input class="inp" id="s-name" placeholder="MyShop"></div>
+        <div class="fg"><label data-i18n="set_phone">ဖုန်းနံပါတ်</label><input class="inp" id="s-phone" placeholder="09-xxx-xxx"></div>
+        <div class="fg"><label data-i18n="set_addr">လိပ်စာ</label><input class="inp" id="s-addr" placeholder="ရပ်ကွက်၊ မြို့နယ်"></div>
+        <div class="fg"><label data-i18n="set_tin">TIN နံပါတ်</label><input class="inp" id="s-tin" placeholder="TIN-xxxxx (ရှိရင်)"></div>
       </div>
     </div>
 
+    <div id="settings-sub-receipt" class="settings-subpage card" style="display:none;">
+      <div class="card-hd"><button class="btn btn-ghost btn-sm" onclick="backToSettingsMenu()">← Back</button><span>🧾 Receipt Design</span></div>
+      <div style="padding:16px;">
+        <div class="fg"><label data-i18n="set_logo">Logo</label><div style="display:flex;gap:9px;align-items:flex-start;"><div id="logo-prev-wrap" style="width:60px;height:60px;border:1px solid var(--clr-border);border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--clr-s2);flex-shrink:0;overflow:hidden;"><span id="logo-prev-emoji" style="font-size:26px;">🛒</span><img id="logo-prev-img" style="display:none;width:100%;height:100%;object-fit:contain;"></div><div style="flex:1;"><div style="display:flex;gap:5px;margin-bottom:5px;"><input class="inp" id="r-logo-emoji" placeholder="Emoji (🛒 🏪 ...)" style="flex:1;font-size:16px;" oninput="previewLogo()"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('r-logo-file').click()">🖼️</button><input type="file" id="r-logo-file" accept="image/*" style="display:none" onchange="handleLogoImg(event)"></div><button class="btn btn-ghost btn-sm" onclick="clearLogo()" style="font-size:9px;" data-i18n="set_logo_del">ဖျက်မည်</button></div></div></div>
+        <div class="fg"><label data-i18n="set_header">Header စာ</label><textarea class="r-edit-field" id="r-header" rows="2" placeholder="ဆိုင်ဆောင်ပုဒ် / ကြော်ငြာ..."></textarea></div>
+        <div class="fg"><label data-i18n="set_footer">Footer စာ</label><textarea class="r-edit-field" id="r-footer" rows="2" placeholder="ကျေးဇူးတင်ပါသည်..."></textarea></div>
+        <div class="fg"><label data-i18n="set_extra">Extra Info</label><textarea class="r-edit-field" id="r-extra" rows="2" placeholder="ဆိုင်ဖွင့်ချိန် ၈နာရီ - ၁၀နာရီ&#10;FB: MyShop"></textarea></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px;"><input type="checkbox" id="r-show-tax" style="accent-color:var(--clr-accent);width:13px;height:13px;"><span style="font-size:11px;" data-i18n="set_tax">Tax ပြမည်</span><input class="inp" id="r-tax-pct" type="number" placeholder="%" min="0" max="100" style="width:66px;"><span style="font-size:10px;color:var(--clr-t2);">%</span></div>
+        <button class="btn btn-ghost btn-sm" onclick="previewReceipt()" data-i18n="set_preview">👁️ Receipt Preview</button>
+      </div>
+    </div>
+
+    <div id="settings-sub-appearance" class="settings-subpage card" style="display:none;">
+      <div class="card-hd"><button class="btn btn-ghost btn-sm" onclick="backToSettingsMenu()">← Back</button><span>🎨 Appearance</span></div>
+      <div style="padding:16px;">
+        <div class="fg" style="display:flex;align-items:center;justify-content:space-between;"><label>Dark Mode</label><input id="appearance-dark-mode" type="checkbox" style="accent-color:var(--clr-accent);width:16px;height:16px;" onchange="setThemeFromSettings()"></div>
+        <div class="fg"><label>Language</label><select id="appearance-lang" class="sel" onchange="setLangFromSettings()"><option value="my">မြန်မာ</option><option value="en">English</option></select></div>
+        <div style="font-size:10px;font-weight:700;color:var(--clr-t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:11px;">Gradient Presets</div>
+        <div id="grad-preview-bar" style="height:10px;border-radius:99px;margin-bottom:14px;transition:background 0.3s;background:linear-gradient(135deg,#a78bfa,#7c3aed);"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          <button onclick="applyGradientPreset('#a78bfa','#7c3aed')" title="Violet (Default)" style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#a78bfa,#7c3aed);border:2px solid rgba(167,139,250,.5);cursor:pointer;"></button>
+          <button onclick="applyGradientPreset('#818cf8','#4338ca')" title="Indigo" style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#4338ca);border:2px solid transparent;cursor:pointer;"></button>
+          <button onclick="applyGradientPreset('#60a5fa','#2563eb')" title="Blue" style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#60a5fa,#2563eb);border:2px solid transparent;cursor:pointer;"></button>
+          <button onclick="applyGradientPreset('#34d399','#059669')" title="Emerald" style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#34d399,#059669);border:2px solid transparent;cursor:pointer;"></button>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:var(--clr-t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Custom Gradient</div>
+        <div style="display:flex;align-items:center;gap:10px;"><input type="color" id="color-accent" value="#a78bfa" oninput="onGradientChange()" style="width:38px;height:38px;border:2px solid var(--clr-border);border-radius:10px;cursor:pointer;padding:2px;background:var(--clr-s2);"><div style="flex:1;height:3px;border-radius:99px;background:var(--grad-accent);"></div><input type="color" id="color-accent2" value="#7c3aed" oninput="onGradientChange()" style="width:38px;height:38px;border:2px solid var(--clr-border);border-radius:10px;cursor:pointer;padding:2px;background:var(--clr-s2);"></div>
+      </div>
+    </div>
+
+    <div style="display:none;">
+      <input type="radio" name="pfs" id="pfs-small" value="small"><input type="radio" name="pfs" id="pfs-medium" value="medium" checked><input type="radio" name="pfs" id="pfs-large" value="large">
+      <input type="number" id="p-copies" value="1"><input type="checkbox" id="p-autoprint"><input type="checkbox" id="p-show-saleid" checked><input type="checkbox" id="p-show-cust" checked><input type="checkbox" id="p-show-qr" checked><input type="checkbox" id="p-show-note" checked>
+      <input id="p-name"><select id="p-model"><option>Other model</option></select><select id="p-interface"><option value="bluetooth">bluetooth</option><option value="usb">usb</option></select><div id="p-ip-wrap"></div><input id="p-ip-address"><select id="p-mode"><option value="graphic">graphic</option></select><select id="p-width"><option>72 mm</option></select><select id="p-resolution"><option>203 dpi (8 dots/mm)</option></select><input id="p-esc-init"><input id="p-esc-cut" value="1D,56,42,00"><input id="p-esc-drawer" value="1B,70,00,19,FA"><span id="bt-status-lbl"></span><span id="usb-status-lbl"></span>
+    </div>
   </div>
 </div><!-- /settings -->
 
@@ -12906,7 +12713,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     </div>
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="saveReceiptEdits()">💾 သိမ်းမည်</button>
-      <button class="btn btn-blue" onclick="printAndReset()">🖨️ Print</button>
+      <button class="btn btn-blue" onclick="resetAfterReceipt()">Done</button>
     </div>
   </div>
 </div>
@@ -13897,9 +13704,7 @@ function showReceiptModal(sale){
   renderItemEditors(editItems);
   livePreview();
   openM('m-receipt');
-  if(S.print&&S.print.autoPrint&&sale.id!==-1){
-    setTimeout(function(){printR();},700);
-  }
+  // Web print flow disabled; Flutter app handles printing.
 }
 
 function renderItemEditors(items){
@@ -13985,7 +13790,7 @@ function saveReceiptEdits(){
   save();notif(t('notif_saved'),'ok');resetAfterReceipt();
 }
 
-function printAndReset(){printR();resetAfterReceipt();}
+function printAndReset(){resetAfterReceipt();}
 
 function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -14088,7 +13893,7 @@ function printR(){
     if(i<copies-1)repeated+='<div style="page-break-after:always;"></div>';
   }
   document.getElementById('pa').innerHTML='<style>'+css+'</style>'+repeated;
-  window.print();
+  notif('Web printing disabled. Flutter app ကိုပဲသုံးပါ။','warn');
 }
 
 function previewReceipt(){
@@ -14757,8 +14562,50 @@ function loadSettings(){
   document.getElementById('p-esc-init').value=P.escposInitCmd||'';
   document.getElementById('p-esc-cut').value=P.escposCutCmd||'1D,56,42,00';
   document.getElementById('p-esc-drawer').value=P.escposDrawerCmd||'1B,70,00,19,FA';
+  var dm=document.getElementById('appearance-dark-mode');
+  if(dm)dm.checked=!document.body.classList.contains('light-mode');
+  var langSel=document.getElementById('appearance-lang');
+  if(langSel)langSel.value=S.lang||curLang||'my';
+  backToSettingsMenu();
   togglePrintInterfaceFields();
   updatePrinterDisplay();
+}
+
+function openSettingsSection(key){
+  var menu=document.getElementById('settings-menu');
+  if(menu)menu.style.display='none';
+  document.querySelectorAll('.settings-subpage').forEach(function(el){
+    el.style.display='none';
+  });
+  var active=document.getElementById('settings-sub-'+key);
+  if(active)active.style.display='block';
+}
+
+function backToSettingsMenu(){
+  var menu=document.getElementById('settings-menu');
+  if(menu)menu.style.display='block';
+  document.querySelectorAll('.settings-subpage').forEach(function(el){
+    el.style.display='none';
+  });
+}
+
+function setThemeFromSettings(){
+  var chk=document.getElementById('appearance-dark-mode');
+  if(!chk)return;
+  var wantDark=!!chk.checked;
+  var isDark=!document.body.classList.contains('light-mode');
+  if(wantDark!==isDark){
+    toggleTheme();
+  }
+}
+
+function setLangFromSettings(){
+  var sel=document.getElementById('appearance-lang');
+  if(!sel)return;
+  curLang=sel.value==='en'?'en':'my';
+  S.lang=curLang;
+  save();
+  applyLang();
 }
 
 function savePrintSettings(){
