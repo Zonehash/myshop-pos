@@ -12741,6 +12741,19 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       </div>
       <div class="fg" style="margin-bottom:7px;">
         <label id="qa-qty-label" data-i18n="qa_qty">အရေအတွက်</label>
+        <div id="qa-unit-choice" style="display:none;margin:5px 0 8px;">
+          <div style="display:flex;gap:7px;">
+            <button id="qa-unit-small-btn" onclick="qaSetUnitMode('small')" type="button"
+              style="flex:1;padding:6px;border-radius:7px;border:1px solid var(--clr-border);background:var(--clr-accent2);color:#fff;font-size:11px;cursor:pointer;">
+              Small
+            </button>
+            <button id="qa-unit-big-btn" onclick="qaSetUnitMode('big')" type="button"
+              style="flex:1;padding:6px;border-radius:7px;border:1px solid var(--clr-border);background:var(--clr-s3);color:var(--clr-t1);font-size:11px;cursor:pointer;">
+              Big
+            </button>
+          </div>
+          <div id="qa-unit-choice-hint" style="margin-top:4px;text-align:center;color:var(--clr-t2);font-size:9px;"></div>
+        </div>
         <div style="display:flex;align-items:center;gap:9px;">
           <button onclick="qaQty(-1)" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--clr-border);background:var(--clr-s3);color:var(--clr-t1);font-size:21px;cursor:pointer;flex-shrink:0;line-height:1;transition:all var(--ease);">−</button>
           <input class="inp" id="qa-qty" type="text" inputmode="numeric" pattern="[0-9]*"
@@ -13241,6 +13254,7 @@ function renderPGrid(q,cat){
 }
 
 var qaProductId=null;
+var qaUnitMode='small';
 
 function addToCart(id){
   var p=S.products.find(function(x){return x.id===id;});
@@ -13253,11 +13267,40 @@ function addToCart(id){
   var unitLbl=p.unitSmall||'ခု';
   document.getElementById('qa-qty-label').textContent=t('qa_qty')+' ('+unitLbl+')';
   document.getElementById('qa-origprice').textContent=t('qa_price')+': '+f(p.price)+' '+t('kyat')+' / '+unitLbl;
+  var ratio=p.unitRatio||0;
+  var hasUnits=ratio>0&&p.unitBig&&p.unitSmall;
+  qaUnitMode='small';
+  var unitChoice=document.getElementById('qa-unit-choice');
+  if(hasUnits){
+    unitChoice.style.display='block';
+    document.getElementById('qa-unit-small-btn').textContent='1 '+(p.unitSmallLbl||p.unitSmall);
+    document.getElementById('qa-unit-big-btn').textContent='1 '+(p.unitBigLbl||p.unitBig);
+    document.getElementById('qa-unit-choice-hint').textContent='1 '+(p.unitBigLbl||p.unitBig)+' = '+ratio+' '+(p.unitSmallLbl||p.unitSmall);
+  }else{
+    unitChoice.style.display='none';
+  }
+  qaSetUnitMode('small');
   document.getElementById('qa-price').value=p.price;
   document.getElementById('qa-qty').value='1';
   qaUpdateTotal();
   openM('m-quick');
   setTimeout(function(){document.getElementById('qa-price').select();},100);
+}
+
+function qaSetUnitMode(mode){
+  qaUnitMode=mode==='big'?'big':'small';
+  var p=S.products.find(function(x){return x.id===qaProductId;});
+  if(!p)return;
+  var ratio=p.unitRatio||0;
+  var smallLbl=(p.unitSmallLbl||p.unitSmall||'ခု');
+  var bigLbl=(p.unitBigLbl||p.unitBig||'ဖာ');
+  var isBig=qaUnitMode==='big'&&ratio>0&&p.unitBig;
+  document.getElementById('qa-unit-small-btn').style.background=isBig?'var(--clr-s3)':'var(--clr-accent2)';
+  document.getElementById('qa-unit-small-btn').style.color=isBig?'var(--clr-t1)':'#fff';
+  document.getElementById('qa-unit-big-btn').style.background=isBig?'var(--clr-accent2)':'var(--clr-s3)';
+  document.getElementById('qa-unit-big-btn').style.color=isBig?'#fff':'var(--clr-t1)';
+  document.getElementById('qa-qty-label').textContent=t('qa_qty')+' ('+(isBig?bigLbl:smallLbl)+')';
+  qaUpdateTotal();
 }
 
 function qaQty(d){
@@ -13272,13 +13315,15 @@ function qaUpdateTotal(){
   if(!p)return;
   var price=parseInt(document.getElementById('qa-price').value)||0;
   var qty=parseInt(document.getElementById('qa-qty').value)||1;
-  document.getElementById('qa-total').textContent='စုစုပေါင်း: '+f(price*qty)+' '+t('kyat');
-  var unitBox=document.getElementById('qa-unit-box');
   var ratio=p.unitRatio||0;
+  var useBig=qaUnitMode==='big'&&ratio>0&&p.unitBig;
+  var baseQty=qty*(useBig?ratio:1);
+  document.getElementById('qa-total').textContent='စုစုပေါင်း: '+f(price*baseQty)+' '+t('kyat');
+  var unitBox=document.getElementById('qa-unit-box');
   if(ratio>0&&p.unitBig){
     unitBox.style.display='block';
-    var bigQty=Math.floor(qty/ratio);
-    var smallRem=qty%ratio;
+    var bigQty=Math.floor(baseQty/ratio);
+    var smallRem=baseQty%ratio;
     var convertTxt='';
     if(bigQty>0&&smallRem>0) convertTxt=bigQty+' '+(p.unitBigLbl||p.unitBig)+' '+smallRem+' '+(p.unitSmallLbl||p.unitSmall);
     else if(bigQty>0) convertTxt=bigQty+' '+(p.unitBigLbl||p.unitBig);
@@ -13295,10 +13340,13 @@ function qaConfirm(){
   if(!p)return;
   var price=parseInt(document.getElementById('qa-price').value)||p.price;
   var qty=parseInt(document.getElementById('qa-qty').value)||1;
+  var ratio=p.unitRatio||0;
+  var useBig=qaUnitMode==='big'&&ratio>0&&p.unitBig;
+  var baseQty=qty*(useBig?ratio:1);
   var unitSmall=p.unitSmall||'';
   var ex=S.cart.find(function(i){return i.id===p.id&&i.price===price;});
-  if(ex){ex.qty+=qty;ex.name=p.name;}
-  else S.cart.push({id:p.id,name:p.name,price:price,qty:qty,icon:p.icon,img:p.img,unitSmall:unitSmall,unitRatio:p.unitRatio||0,unitBig:p.unitBig||'',unitSmallLbl:p.unitSmallLbl||'',unitBigLbl:p.unitBigLbl||''});
+  if(ex){ex.qty+=baseQty;ex.name=p.name;}
+  else S.cart.push({id:p.id,name:p.name,price:price,qty:baseQty,icon:p.icon,img:p.img,unitSmall:unitSmall,unitRatio:p.unitRatio||0,unitBig:p.unitBig||'',unitSmallLbl:p.unitSmallLbl||'',unitBigLbl:p.unitBigLbl||''});
   var card=document.querySelector('.pcard[data-id="'+p.id+'"]');
   if(card){card.classList.add('pcard-added');setTimeout(function(){card.classList.remove('pcard-added');},450);}
   updateCardQtyBadge(p.id);
