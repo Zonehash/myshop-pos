@@ -56,6 +56,7 @@ window.loadFromFirebase = async function(uid){
     if(S.lightMode){document.body.classList.add('light-mode');document.getElementById('theme-btn').textContent='🌙';}
     else{document.getElementById('theme-btn').textContent='☀️';}
     if(!S.categories||!S.categories.length) S.categories=['အစားအသောက်','အဖျော်ယမကာ','ကုန်ပစ္စည်း','ဆေးဝါး','အချိုပွဲ'];
+    if(!S.profitCosts) S.profitCosts={};
     if(!S.products||!S.products.length) seedP();
     if(!S.customers||!S.customers.length) seedC();
     renderAll(); updateTopbar(); applyLang();
@@ -108,7 +109,7 @@ window.fbSignIn = async function(){
 
 window.fbSignOut = async function(){
   await signOut(auth);
-  S = {products:[],categories:[],sales:[],customers:[],cart:[],settings:{shopName:'MyShop',phone:'09-000-000',address:'ရန်ကုန်မြို့',tin:''},receipt:{header:'',footer:'ကျေးဇူးတင်ပါသည်! ပြန်လာပါဦး 😊',extra:'',logo:'🛒',showTax:false,taxPct:0},print:{paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true,printerModel:'Other model',interface:'bluetooth',ipAddress:'',printMode:'graphic',printWidth:'72 mm',printResolution:'203 dpi (8 dots/mm)',escposInitCmd:'',escposCutCmd:'1D,56,42,00',escposDrawerCmd:'1B,70,00,19,FA'},pay:'',lang:'my',lightMode:false,rPeriod:'today'};
+  S = {products:[],categories:[],sales:[],customers:[],cart:[],profitCosts:{},settings:{shopName:'MyShop',phone:'09-000-000',address:'ရန်ကုန်မြို့',tin:''},receipt:{header:'',footer:'ကျေးဇူးတင်ပါသည်! ပြန်လာပါဦး 😊',extra:'',logo:'🛒',showTax:false,taxPct:0},print:{paperWidth:80,fontSize:'medium',copies:1,autoPrint:false,showSaleId:true,showCustName:true,showQR:true,showNote:true,printerModel:'Other model',interface:'bluetooth',ipAddress:'',printMode:'graphic',printWidth:'72 mm',printResolution:'203 dpi (8 dots/mm)',escposInitCmd:'',escposCutCmd:'1D,56,42,00',escposDrawerCmd:'1B,70,00,19,FA'},pay:'',lang:'my',lightMode:false,rPeriod:'today'};
 };
 
 function fbErrMsg(code){
@@ -12041,6 +12042,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   <button class="nb active" id="nav-sales" onclick="showPage('sales')"><span>🛒</span><span data-i18n="nav_sales">အရောင်း</span></button>
   <button class="nb" id="nav-products" onclick="showPage('products')"><span>📦</span><span data-i18n="nav_products">ပစ္စည်း</span></button>
   <button class="nb" id="nav-history" onclick="showPage('history')"><span>📋</span><span data-i18n="nav_history">မှတ်တမ်း</span></button>
+  <button class="nb" id="nav-profit" onclick="showPage('profit')"><span>💹</span><span>Profit</span></button>
   <button class="nb" id="nav-customers" onclick="showPage('customers')"><span>👥</span><span data-i18n="nav_customers">ဖောက်သည်</span></button>
   <button class="nb" id="nav-reports" onclick="showPage('reports')"><span>📊</span><span data-i18n="nav_reports">အစီရင်ခံ</span></button>
   <button class="nb" id="nav-settings" onclick="showPage('settings')"><span>⚙️</span><span data-i18n="nav_settings">ဆက်တင်</span></button>
@@ -12463,6 +12465,39 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   </div>
 </div>
 
+<!-- ======================== PROFIT PAGE ======================== -->
+<div class="page" id="page-profit">
+  <div class="page-hd">
+    <div class="page-title">💹 Profit</div>
+    <div style="display:flex;gap:7px;align-items:center;">
+      <input type="month" class="inp" id="profit-month" style="width:155px;" onchange="renderProfit()">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profit-month').value='';renderProfit()">အားလုံး</button>
+    </div>
+  </div>
+  <div class="stats" id="profit-stats"></div>
+  <div class="card" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="tbl-wrap" style="flex:1;overflow-y:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Delivery</th>
+            <th>Payment</th>
+            <th>Original Price</th>
+            <th>Profit</th>
+          </tr>
+        </thead>
+        <tbody id="pftbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ======================== CUSTOMERS PAGE ======================== -->
 <div class="page" id="page-customers">
   <div class="page-hd">
@@ -12866,6 +12901,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 <script>
 var S = {
   products:[], categories:[], sales:[], customers:[], cart:[],
+  profitCosts:{},
   pay:'', editProd:null, editCust:null, rPeriod:'today',
   settings:{shopName:'MyShop',phone:'09-000-000',address:'ရန်ကုန်မြို့',tin:''},
   receipt:{header:'',footer:'ကျေးဇူးတင်ပါသည်! ပြန်လာပါဦး 😊',extra:'',logo:'🛒',showTax:false,taxPct:0},
@@ -12927,6 +12963,7 @@ function showPage(p){
   document.getElementById('nav-'+p).classList.add('active');
   if(p==='products')renderProdTable();
   if(p==='history')renderHistory();
+  if(p==='profit')renderProfit();
   if(p==='customers')renderCusts();
   if(p==='reports')renderReports();
   if(p==='settings')loadSettings();
@@ -14206,6 +14243,103 @@ function renderHistory(){
       +'<td class="text-danger">'+((s.disc||0)>0?'-'+f(s.disc)+' '+t('kyat'):'-')+'</td>'
       +'<td class="mono" style="color:var(--clr-t3);'+totalStyle+'">'+f(s.total||0)+' ကျပ်</td>'
       +'<td style="white-space:nowrap;"><button class="btn btn-ghost btn-sm" onclick="showReceiptById('+s.id+')">🧾</button>'+(isCancelled?'':'<button class="btn btn-sm" onclick="cancelSale('+s.id+')" style="margin-left:4px;background:rgba(239,68,68,.1);color:var(--clr-danger);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;">❌</button>')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function getProfitCostKey(saleId,itemIdx){
+  return String(saleId)+'_'+String(itemIdx);
+}
+
+function setProfitCost(key,value){
+  if(!S.profitCosts)S.profitCosts={};
+  var v=parseFloat(value);
+  S.profitCosts[key]=isNaN(v)?0:v;
+  save();
+  renderProfit();
+}
+
+function renderProfit(){
+  if(!S.profitCosts)S.profitCosts={};
+  var monthEl=document.getElementById('profit-month');
+  if(monthEl && !monthEl.value){
+    monthEl.value=new Date().toISOString().slice(0,7);
+  }
+  var monthVal=monthEl?monthEl.value:'';
+  var sales=S.sales.slice();
+  if(monthVal){
+    sales=sales.filter(function(s){
+      return String(s.date||'').slice(0,7)===monthVal;
+    });
+  }
+  sales=sales.filter(function(s){return s.cancelled!==true;});
+
+  var rows=[];
+  sales.forEach(function(s){
+    var items=s.items||[];
+    var perItemDeli=items.length>0?((Number(s.deli)||0)/items.length):0;
+    var cust=s.custId?S.customers.find(function(c){return c.id===s.custId;}):null;
+    var custName=cust&&cust.name?cust.name:'-';
+    items.forEach(function(i,idx){
+      var qty=Number(i.qty)||0;
+      var salePrice=Number(i.price)||0;
+      var lineTotal=salePrice*qty;
+      var key=getProfitCostKey(s.id,idx);
+      var pFromProduct=S.products.find(function(p){ return p.id===i.id; });
+      var defaultCost=(pFromProduct&&Number(pFromProduct.cost))||0;
+      var origPrice=(S.profitCosts[key]!==undefined)?Number(S.profitCosts[key]):defaultCost;
+      var lineCost=origPrice*qty;
+      var profit=lineTotal-lineCost-perItemDeli;
+      rows.push({
+        date:String(s.date||''),
+        cust:custName,
+        item:i.name||'',
+        qty:qty,
+        salePrice:salePrice,
+        lineTotal:lineTotal,
+        delivery:perItemDeli,
+        payment:(PAY_NAMES[s.pay]||s.pay||'-'),
+        key:key,
+        origPrice:origPrice,
+        profit:profit
+      });
+    });
+  });
+
+  var totalRevenue=rows.reduce(function(a,r){return a+r.lineTotal;},0);
+  var totalCost=rows.reduce(function(a,r){return a+(r.origPrice*r.qty);},0);
+  var totalDelivery=rows.reduce(function(a,r){return a+r.delivery;},0);
+  var totalProfit=rows.reduce(function(a,r){return a+r.profit;},0);
+  var margin=totalRevenue>0?((totalProfit/totalRevenue)*100):0;
+  var stats=document.getElementById('profit-stats');
+  stats.innerHTML=
+    '<div class="stat"><div class="stat-value text-accent" style="font-size:17px;">'+f(totalRevenue)+'</div><div class="stat-label">💰 Sales Total</div></div>'
+    +'<div class="stat"><div class="stat-value" style="font-size:17px;">'+f(totalCost)+'</div><div class="stat-label">💸 Original Cost</div></div>'
+    +'<div class="stat"><div class="stat-value" style="font-size:17px;">'+f(Math.round(totalDelivery))+'</div><div class="stat-label">🛵 Delivery Cost</div></div>'
+    +'<div class="stat"><div class="stat-value '+(totalProfit>=0?'text-accent':'text-danger')+'" style="font-size:17px;">'+f(Math.round(totalProfit))+'</div><div class="stat-label">📈 Profit ('+margin.toFixed(1)+'%)</div></div>';
+
+  var tbody=document.getElementById('pftbody');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:26px;color:var(--clr-t2)">Profit data မရှိသေး</td></tr>';
+    return;
+  }
+  tbody.innerHTML=rows.map(function(r){
+    var d='-';
+    try{
+      d=new Date(r.date).toLocaleDateString('en-GB');
+    }catch(e){}
+    var pColor=r.profit>=0?'var(--clr-accent)':'var(--clr-danger)';
+    return '<tr>'
+      +'<td style="font-size:10px;color:var(--clr-t2);">'+d+'</td>'
+      +'<td>'+escHtml(r.cust)+'</td>'
+      +'<td>'+escHtml(r.item)+'</td>'
+      +'<td class="mono">'+r.qty+'</td>'
+      +'<td class="mono">'+f(r.salePrice)+'</td>'
+      +'<td class="mono">'+f(r.lineTotal)+'</td>'
+      +'<td class="mono">'+f(Math.round(r.delivery))+'</td>'
+      +'<td style="font-size:10px;">'+escHtml(r.payment)+'</td>'
+      +'<td><input class="inp" type="number" min="0" value="'+Math.round(r.origPrice)+'" oninput="setProfitCost(\''+r.key+'\',this.value)" style="width:95px;font-size:10px;padding:4px 6px;"></td>'
+      +'<td class="mono" style="color:'+pColor+';font-weight:700;">'+f(Math.round(r.profit))+'</td>'
       +'</tr>';
   }).join('');
 }
