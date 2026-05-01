@@ -1066,11 +1066,11 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
 }
 
 #page-history .page-hd {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 #page-history .stats {
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 #page-history .stat {
   padding: 9px 10px 8px;
@@ -1088,9 +1088,12 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
 #page-history table {
   min-width: 1080px;
 }
+#page-history .card {
+  margin-top: 0;
+}
 #page-profit .stats {
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 #page-profit .stat {
   padding: 9px 10px 8px;
@@ -1102,6 +1105,30 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
 }
 #page-profit table {
   min-width: 1120px;
+}
+#page-profit .page-hd {
+  margin-bottom: 6px;
+}
+#page-profit .card {
+  margin-top: 0;
+}
+#page-products .page-hd {
+  margin-bottom: 8px;
+}
+#page-products .stats {
+  margin-bottom: 8px;
+}
+#page-products .card > div[style*="padding:9px 11px"] {
+  padding: 7px 9px !important;
+}
+#page-products th,
+#page-products td,
+#page-history th,
+#page-history td,
+#page-profit th,
+#page-profit td {
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 /* =============================================
@@ -2026,7 +2053,7 @@ body.light-mode .notif {
   }
   #page-history .stats {
     gap: 7px;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
   }
   #page-history .stat {
     padding: 8px 9px;
@@ -2039,6 +2066,22 @@ body.light-mode .notif {
   }
   #page-profit .stat .stat-value {
     font-size: 16px;
+  }
+  #page-products .page-hd,
+  #page-history .page-hd,
+  #page-profit .page-hd {
+    margin-bottom: 5px;
+  }
+  #page-products .stats,
+  #page-history .stats,
+  #page-profit .stats {
+    margin-bottom: 5px;
+  }
+  #page-products th, #page-products td,
+  #page-history th, #page-history td,
+  #page-profit th, #page-profit td {
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
   #pgrid { grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: 9px; padding: 9px; }
   .pcard-icon { font-size: 38px; }
@@ -2067,6 +2110,16 @@ body.light-mode .notif {
   .topbar-right { gap: 5px; }
   .topbar-scan-btn { padding: 6px 8px; font-size: 10px; }
   #mobile-nav-drawer { width: 82vw; }
+  #page-products .page-hd,
+  #page-history .page-hd,
+  #page-profit .page-hd {
+    margin-bottom: 4px;
+  }
+  #page-products .stats,
+  #page-history .stats,
+  #page-profit .stats {
+    margin-bottom: 4px;
+  }
   .nb { padding: 9px; font-size: 0; gap: 0; justify-content: center; }
   .nb span:first-child { font-size: 19px; }
   #pgrid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
