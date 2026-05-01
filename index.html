@@ -422,6 +422,7 @@ body {
   flex: 1;
   overflow: hidden;
   position: relative;
+  min-height: 0;
 }
 
 .page {
@@ -430,6 +431,7 @@ body {
   inset: 0;
   background: var(--clr-bg);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 22px;
   flex-direction: column;
   z-index: 1;
@@ -638,6 +640,7 @@ body.light-mode .sel:focus { background: #fff; }
    ============================================= */
 .tbl-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--r-base);
   border: 1px solid var(--clr-border);
   background: var(--clr-s1);
@@ -985,9 +988,15 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
   display: none;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh;
   min-height: 100vh;
   overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  #app-root {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
 }
 
 /* =============================================
@@ -1045,6 +1054,7 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
 #pgrid {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   min-height: 0;
   padding: 12px;
   display: grid;
