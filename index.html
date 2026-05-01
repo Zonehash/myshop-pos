@@ -14251,12 +14251,12 @@ function getProfitCostKey(saleId,itemIdx){
   return String(saleId)+'_'+String(itemIdx);
 }
 
-function setProfitCost(key,value){
+function setProfitCost(key,value,noRender){
   if(!S.profitCosts)S.profitCosts={};
   var v=parseFloat(value);
   S.profitCosts[key]=isNaN(v)?0:v;
   save();
-  renderProfit();
+  if(!noRender) renderProfit();
 }
 
 function renderProfit(){
@@ -14338,7 +14338,7 @@ function renderProfit(){
       +'<td class="mono">'+f(r.lineTotal)+'</td>'
       +'<td class="mono">'+f(Math.round(r.delivery))+'</td>'
       +'<td style="font-size:10px;">'+escHtml(r.payment)+'</td>'
-      +'<td><input class="inp" type="text" inputmode="numeric" pattern="[0-9]*" value="'+Math.round(r.origPrice)+'" oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setProfitCost(\''+r.key+'\',this.value||0)" style="width:95px;font-size:10px;padding:4px 6px;"></td>'
+      +'<td><input class="inp" type="text" inputmode="numeric" pattern="[0-9]*" value="'+Math.round(r.origPrice)+'" oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setProfitCost(\''+r.key+'\',this.value||0,true)" onchange="renderProfit()" style="width:95px;font-size:10px;padding:4px 6px;"></td>'
       +'<td class="mono" style="color:'+pColor+';font-weight:700;">'+f(Math.round(r.profit))+'</td>'
       +'</tr>';
   }).join('');
