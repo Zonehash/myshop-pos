@@ -246,6 +246,22 @@ body {
   letter-spacing: -0.4px;
 }
 
+.topbar-menu-btn {
+  display: none;
+  background: var(--clr-s2);
+  border: 1px solid var(--clr-border);
+  color: var(--clr-t1);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+.topbar-menu-btn:hover {
+  border-color: var(--clr-accent);
+  color: var(--clr-accent);
+}
+
 .topbar-badge {
   background: var(--grad-accent);
   color: #fff;
@@ -413,6 +429,56 @@ body {
   color: var(--clr-accent);
   font-weight: 800;
   box-shadow: inset 0 0 0 1px rgba(167,139,250,.3);
+}
+
+#mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.42);
+  z-index: 310;
+}
+#mobile-nav-drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 255px;
+  max-width: 85vw;
+  background: var(--clr-s1);
+  border-right: 1px solid var(--clr-border);
+  box-shadow: 10px 0 30px rgba(0,0,0,.28);
+  transform: translateX(-110%);
+  transition: transform var(--ease);
+  z-index: 311;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-nav-open #mobile-nav-overlay { display: block; }
+.mobile-nav-open #mobile-nav-drawer { transform: translateX(0); }
+.mobile-nav-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--clr-border);
+  font-size: 13px;
+  font-weight: 800;
+}
+.mobile-nav-list {
+  padding: 10px 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mobile-nav-list .nb {
+  width: 100%;
+  justify-content: flex-start;
+  border: 1px solid transparent;
+}
+.mobile-nav-list .nb.active {
+  border-color: rgba(167,139,250,.35);
 }
 
 /* =============================================
@@ -999,6 +1065,27 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
   }
 }
 
+#page-history .page-hd {
+  margin-bottom: 10px;
+}
+#page-history .stats {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+#page-history .stat {
+  padding: 11px 12px 10px;
+  min-width: 120px;
+}
+#page-history .stat .stat-value {
+  font-size: 21px;
+  margin-bottom: 3px;
+}
+#page-history th,
+#page-history td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 /* =============================================
    SALES PAGE — CATEGORY BAR
    ============================================= */
@@ -1100,7 +1187,9 @@ body.light-mode .pcard:hover {
 .pcard-media img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 6px;
+  background: var(--clr-s2);
   transition: transform var(--ease);
 }
 .pcard:hover .pcard-media img { transform: scale(1.08); }
@@ -1838,7 +1927,9 @@ body.light-mode .notif {
 /* =============================================
    RESPONSIVE — TABLET
    ============================================= */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
+  .topbar-menu-btn { display: inline-flex; align-items: center; justify-content: center; }
+  .nav { display: none; }
   .topbar {
     padding: 0 12px;
     gap: 8px;
@@ -1881,6 +1972,7 @@ body.light-mode .notif {
     min-width: 0;
     gap: 7px;
   }
+  .topbar-menu-btn { padding: 6px 9px; font-size: 15px; }
   .topbar-right {
     width: 100%;
     justify-content: flex-end;
@@ -1914,6 +2006,16 @@ body.light-mode .notif {
     margin-left: auto;
     min-width: 110px;
   }
+  #page-history .stats {
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+  #page-history .stat {
+    padding: 9px 10px;
+  }
+  #page-history .stat .stat-value {
+    font-size: 18px;
+  }
   #pgrid { grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: 9px; padding: 9px; }
   .pcard-icon { font-size: 38px; }
   .page { padding: 13px; }
@@ -1940,6 +2042,7 @@ body.light-mode .notif {
   .topbar-live-label { display: none; }
   .topbar-right { gap: 5px; }
   .topbar-scan-btn { padding: 6px 8px; font-size: 10px; }
+  #mobile-nav-drawer { width: 82vw; }
   .nb { padding: 9px; font-size: 0; gap: 0; justify-content: center; }
   .nb span:first-child { font-size: 19px; }
   #pgrid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
@@ -12098,6 +12201,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 <!-- TOP BAR -->
 <header class="topbar">
+  <button class="topbar-menu-btn" onclick="toggleMobileNav()" aria-label="Open menu">☰</button>
   <div class="topbar-brand">
     <span id="topbar-logo" style="font-size:26px;line-height:1;">🛒</span>
     <span id="topbar-shopname">MyShop</span>
@@ -12117,14 +12221,31 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 <!-- NAVIGATION -->
 <nav class="nav">
-  <button class="nb active" id="nav-sales" onclick="showPage('sales')"><span>🛒</span><span data-i18n="nav_sales">အရောင်း</span></button>
-  <button class="nb" id="nav-products" onclick="showPage('products')"><span>📦</span><span data-i18n="nav_products">ပစ္စည်း</span></button>
-  <button class="nb" id="nav-history" onclick="showPage('history')"><span>📋</span><span data-i18n="nav_history">မှတ်တမ်း</span></button>
-  <button class="nb" id="nav-profit" onclick="showPage('profit')"><span>💹</span><span>Profit</span></button>
-  <button class="nb" id="nav-customers" onclick="showPage('customers')"><span>👥</span><span data-i18n="nav_customers">ဖောက်သည်</span></button>
-  <button class="nb" id="nav-reports" onclick="showPage('reports')"><span>📊</span><span data-i18n="nav_reports">အစီရင်ခံ</span></button>
-  <button class="nb" id="nav-settings" onclick="showPage('settings')"><span>⚙️</span><span data-i18n="nav_settings">ဆက်တင်</span></button>
+  <button class="nb active" id="nav-sales" data-nav-page="sales" onclick="showPage('sales')"><span>🛒</span><span data-i18n="nav_sales">အရောင်း</span></button>
+  <button class="nb" id="nav-products" data-nav-page="products" onclick="showPage('products')"><span>📦</span><span data-i18n="nav_products">ပစ္စည်း</span></button>
+  <button class="nb" id="nav-history" data-nav-page="history" onclick="showPage('history')"><span>📋</span><span data-i18n="nav_history">မှတ်တမ်း</span></button>
+  <button class="nb" id="nav-profit" data-nav-page="profit" onclick="showPage('profit')"><span>💹</span><span>Profit</span></button>
+  <button class="nb" id="nav-customers" data-nav-page="customers" onclick="showPage('customers')"><span>👥</span><span data-i18n="nav_customers">ဖောက်သည်</span></button>
+  <button class="nb" id="nav-reports" data-nav-page="reports" onclick="showPage('reports')"><span>📊</span><span data-i18n="nav_reports">အစီရင်ခံ</span></button>
+  <button class="nb" id="nav-settings" data-nav-page="settings" onclick="showPage('settings')"><span>⚙️</span><span data-i18n="nav_settings">ဆက်တင်</span></button>
 </nav>
+
+<div id="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+<aside id="mobile-nav-drawer">
+  <div class="mobile-nav-hd">
+    <span>Menu</span>
+    <button class="topbar-icon-btn" onclick="closeMobileNav()">✕</button>
+  </div>
+  <div class="mobile-nav-list">
+    <button class="nb active" data-nav-page="sales" onclick="showPage('sales')"><span>🛒</span><span data-i18n="nav_sales">အရောင်း</span></button>
+    <button class="nb" data-nav-page="products" onclick="showPage('products')"><span>📦</span><span data-i18n="nav_products">ပစ္စည်း</span></button>
+    <button class="nb" data-nav-page="history" onclick="showPage('history')"><span>📋</span><span data-i18n="nav_history">မှတ်တမ်း</span></button>
+    <button class="nb" data-nav-page="profit" onclick="showPage('profit')"><span>💹</span><span>Profit</span></button>
+    <button class="nb" data-nav-page="customers" onclick="showPage('customers')"><span>👥</span><span data-i18n="nav_customers">ဖောက်သည်</span></button>
+    <button class="nb" data-nav-page="reports" onclick="showPage('reports')"><span>📊</span><span data-i18n="nav_reports">အစီရင်ခံ</span></button>
+    <button class="nb" data-nav-page="settings" onclick="showPage('settings')"><span>⚙️</span><span data-i18n="nav_settings">ဆက်တင်</span></button>
+  </div>
+</aside>
 
 <main class="main">
 
@@ -13040,11 +13161,19 @@ function tick(){
   document.getElementById('tdate').textContent=n.toLocaleDateString('en-GB');
 }
 
+function toggleMobileNav(){
+  document.body.classList.toggle('mobile-nav-open');
+}
+function closeMobileNav(){
+  document.body.classList.remove('mobile-nav-open');
+}
+
 function showPage(p){
   document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
-  document.querySelectorAll('.nb').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('[data-nav-page]').forEach(function(x){x.classList.remove('active');});
   document.getElementById('page-'+p).classList.add('active');
-  document.getElementById('nav-'+p).classList.add('active');
+  document.querySelectorAll('[data-nav-page="'+p+'"]').forEach(function(x){x.classList.add('active');});
+  closeMobileNav();
   if(p==='products')renderProdTable();
   if(p==='history')renderHistory();
   if(p==='profit')renderProfit();
