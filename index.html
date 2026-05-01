@@ -12469,9 +12469,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 <div class="page" id="page-profit">
   <div class="page-hd">
     <div class="page-title">💹 Profit</div>
-    <div style="display:flex;gap:7px;align-items:center;">
-      <input type="month" class="inp" id="profit-month" style="width:155px;" onchange="renderProfit()">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profit-month').value='';renderProfit()">အားလုံး</button>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">ရက်</label>
+      <input type="date" class="inp" id="profit-date" style="width:150px;" onchange="onProfitDateChange()">
+      <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">လ</label>
+      <input type="month" class="inp" id="profit-month" style="width:155px;" onchange="onProfitMonthChange()">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profit-date').value='';document.getElementById('profit-month').value='';renderProfit()">အားလုံး</button>
     </div>
   </div>
   <div class="stats" id="profit-stats"></div>
@@ -14251,9 +14254,31 @@ function getProfitCostKey(saleId,itemIdx){
   return String(saleId)+'_'+String(itemIdx);
 }
 
+function normMoneyStr(v){
+  return String(v||'').replace(/[^0-9]/g,'');
+}
+function fmtThousandsFromDigits(digits){
+  var s=normMoneyStr(digits);
+  if(!s)return'';
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+function onProfitDateChange(){
+  var d=document.getElementById('profit-date');
+  var m=document.getElementById('profit-month');
+  if(d&&d.value&&m)m.value='';
+  renderProfit();
+}
+function onProfitMonthChange(){
+  var d=document.getElementById('profit-date');
+  var m=document.getElementById('profit-month');
+  if(m&&m.value&&d)d.value='';
+  renderProfit();
+}
+
 function setProfitCost(key,value,noRender){
   if(!S.profitCosts)S.profitCosts={};
-  var v=parseFloat(value);
+  var v=parseFloat(normMoneyStr(value));
   S.profitCosts[key]=isNaN(v)?0:v;
   save();
   if(!noRender) renderProfit();
@@ -14261,13 +14286,16 @@ function setProfitCost(key,value,noRender){
 
 function renderProfit(){
   if(!S.profitCosts)S.profitCosts={};
+  var dateEl=document.getElementById('profit-date');
   var monthEl=document.getElementById('profit-month');
-  if(monthEl && !monthEl.value){
-    monthEl.value=new Date().toISOString().slice(0,7);
-  }
+  var dateVal=dateEl?dateEl.value:'';
   var monthVal=monthEl?monthEl.value:'';
   var sales=S.sales.slice();
-  if(monthVal){
+  if(dateVal){
+    sales=sales.filter(function(s){
+      return String(s.date||'').slice(0,10)===dateVal;
+    });
+  } else if(monthVal){
     sales=sales.filter(function(s){
       return String(s.date||'').slice(0,7)===monthVal;
     });
@@ -14338,7 +14366,7 @@ function renderProfit(){
       +'<td class="mono">'+f(r.lineTotal)+'</td>'
       +'<td class="mono">'+f(Math.round(r.delivery))+'</td>'
       +'<td style="font-size:10px;">'+escHtml(r.payment)+'</td>'
-      +'<td><input class="inp" type="text" inputmode="numeric" pattern="[0-9]*" value="'+Math.round(r.origPrice)+'" oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setProfitCost(\''+r.key+'\',this.value||0,true)" onchange="renderProfit()" style="width:95px;font-size:10px;padding:4px 6px;"></td>'
+      +'<td><input class="inp" type="text" inputmode="numeric" pattern="[0-9,]*" value="'+fmtThousandsFromDigits(String(Math.round(r.origPrice)))+'" oninput="(function(el,k){var n=normMoneyStr(el.value);el.value=fmtThousandsFromDigits(n);setProfitCost(k,n||0,true);})(this,\''+r.key+'\')" onchange="renderProfit()" style="width:110px;font-size:10px;padding:4px 6px;"></td>'
       +'<td class="mono" style="color:'+pColor+';font-weight:700;">'+f(Math.round(r.profit))+'</td>'
       +'</tr>';
   }).join('');
