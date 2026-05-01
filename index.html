@@ -12438,8 +12438,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div class="page-title" data-i18n="hist_page_title">📋 မှတ်တမ်း</div>
     <div style="display:flex;gap:7px;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="exportHistoryCSV()">📤 Export CSV</button>
-      <input type="date" class="inp" id="hist-date" style="width:150px;" onchange="renderHistory()">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('hist-date').value='';renderHistory()" data-i18n="hist_all">အားလုံး</button>
+      <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">ရက်</label>
+      <input type="date" class="inp" id="hist-date" style="width:150px;" onchange="onHistDateChange()">
+      <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">လ</label>
+      <input type="month" class="inp" id="hist-month" style="width:155px;" onchange="onHistMonthChange()">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('hist-date').value='';document.getElementById('hist-month').value='';renderHistory()" data-i18n="hist_all">အားလုံး</button>
     </div>
   </div>
   <div class="stats" id="hist-stats"></div>
@@ -12472,7 +12475,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
       <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">ရက်</label>
       <input type="date" class="inp" id="profit-date" style="width:150px;" onchange="onProfitDateChange()">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profit-date').value='';renderProfit()">အားလုံး</button>
+      <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">လ</label>
+      <input type="month" class="inp" id="profit-month" style="width:155px;" onchange="onProfitMonthChange()">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profit-date').value='';document.getElementById('profit-month').value='';renderProfit()">အားလုံး</button>
     </div>
   </div>
   <div class="stats" id="profit-stats"></div>
@@ -13004,15 +13009,22 @@ function exportProductsCSV(){
 
 function exportHistoryCSV(){
   if(!S.sales||!S.sales.length){notif('မှတ်တမ်းမရှိသေး','warn');return;}
-  var df=document.getElementById('hist-date')&&document.getElementById('hist-date').value;
+  var dateEl=document.getElementById('hist-date');
+  var monthEl=document.getElementById('hist-month');
+  var df=dateEl&&dateEl.value;
+  var mf=monthEl&&monthEl.value;
   var filtered=S.sales.slice();
   if(df){
     filtered=filtered.filter(function(s){
       return String(s.date||'').startsWith(df);
     });
+  } else if(mf){
+    filtered=filtered.filter(function(s){
+      return String(s.date||'').slice(0,7)===mf;
+    });
   }
   if(!filtered.length){
-    notif(df ? 'ရွေးထားတဲ့ ရက်အတွက် မှတ်တမ်းမရှိသေး' : 'မှတ်တမ်းမရှိသေး','warn');
+    notif((df||mf) ? 'ရွေးထားတဲ့ ရက်/လ အတွက် မှတ်တမ်းမရှိသေး' : 'မှတ်တမ်းမရှိသေး','warn');
     return;
   }
   var rows=[[
@@ -13060,10 +13072,10 @@ function exportHistoryCSV(){
   a.href=url;
   a.download=df
     ? ('sales_history_'+df+'.csv')
-    : ('sales_history_'+(new Date().toISOString().slice(0,10))+'.csv');
+    : (mf ? ('sales_history_'+mf+'.csv') : ('sales_history_'+(new Date().toISOString().slice(0,10))+'.csv'));
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  notif(df ? ('📤 '+df+' အတွက် CSV export လုပ်ပြီး') : '📤 History CSV export လုပ်ပြီး','ok');
+  notif(df ? ('📤 '+df+' အတွက် CSV export လုပ်ပြီး') : (mf ? ('📤 '+mf+' လအတွက် CSV export လုပ်ပြီး') : '📤 History CSV export လုပ်ပြီး'),'ok');
 }
 
 function openImportModal(){
@@ -14201,10 +14213,29 @@ function addCat(){
 function delCat(i){S.categories.splice(i,1);save();renderCatListModal();buildCatUI();}
 
 // ===== HISTORY =====
+function onHistDateChange(){
+  var d=document.getElementById('hist-date');
+  var m=document.getElementById('hist-month');
+  if(d&&d.value&&m)m.value='';
+  renderHistory();
+}
+function onHistMonthChange(){
+  var d=document.getElementById('hist-date');
+  var m=document.getElementById('hist-month');
+  if(m&&m.value&&d)d.value='';
+  renderHistory();
+}
 function renderHistory(){
-  var df=document.getElementById('hist-date')&&document.getElementById('hist-date').value;
+  var dateEl=document.getElementById('hist-date');
+  var monthEl=document.getElementById('hist-month');
+  var df=dateEl&&dateEl.value;
+  var mf=monthEl&&monthEl.value;
   var fl=S.sales.slice().reverse();
-  if(df)fl=fl.filter(function(s){return s.date.startsWith(df);});
+  if(df){
+    fl=fl.filter(function(s){return String(s.date||'').startsWith(df);});
+  } else if(mf){
+    fl=fl.filter(function(s){return String(s.date||'').slice(0,7)===mf;});
+  }
   var tRev=fl.reduce(function(s,x){return s+(x.total||0);},0);
   var tTx=fl.length,avg=tTx?tRev/tTx:0;
   var tDisc=fl.reduce(function(s,x){return s+(x.disc||0);},0);
@@ -14262,6 +14293,15 @@ function fmtThousandsFromDigits(digits){
 }
 
 function onProfitDateChange(){
+  var d=document.getElementById('profit-date');
+  var m=document.getElementById('profit-month');
+  if(d&&d.value&&m)m.value='';
+  renderProfit();
+}
+function onProfitMonthChange(){
+  var d=document.getElementById('profit-date');
+  var m=document.getElementById('profit-month');
+  if(m&&m.value&&d)d.value='';
   renderProfit();
 }
 
@@ -14276,11 +14316,17 @@ function setProfitCost(key,value,noRender){
 function renderProfit(){
   if(!S.profitCosts)S.profitCosts={};
   var dateEl=document.getElementById('profit-date');
+  var monthEl=document.getElementById('profit-month');
   var dateVal=dateEl?dateEl.value:'';
+  var monthVal=monthEl?monthEl.value:'';
   var sales=S.sales.slice();
   if(dateVal){
     sales=sales.filter(function(s){
       return String(s.date||'').slice(0,10)===dateVal;
+    });
+  } else if(monthVal){
+    sales=sales.filter(function(s){
+      return String(s.date||'').slice(0,7)===monthVal;
     });
   }
   sales=sales.filter(function(s){return s.cancelled!==true;});
