@@ -2026,9 +2026,15 @@ body.light-mode .notif {
     height: calc(56px + env(safe-area-inset-top, 0px));
     box-sizing: border-box;
   }
-  .main {
-    padding-top: calc(56px + env(safe-area-inset-top, 0px));
-    box-sizing: border-box;
+  /*
+   * Pages use position:absolute; inset:0 — padding on .main does not offset them on some
+   * WebKit/Android builds; set top explicitly so Sales toolbar / Cart stay below fixed topbar.
+   */
+  .main > .page {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    right: 0;
+    bottom: 0;
+    left: 0;
   }
   .topbar-right {
     gap: 7px;
