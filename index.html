@@ -1983,9 +1983,22 @@ body.light-mode .notif {
 @media (max-width: 1280px) {
   .topbar-menu-btn { display: inline-flex; align-items: center; justify-content: center; }
   .nav { display: none; }
+  /* Keep header visible when native <select> pickers resize the visual viewport (tablet Chrome/Safari). */
   .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 120;
     padding: 0 12px;
+    padding-top: env(safe-area-inset-top, 0px);
     gap: 8px;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    box-sizing: border-box;
+  }
+  #app-root {
+    padding-top: calc(56px + env(safe-area-inset-top, 0px));
+    box-sizing: border-box;
   }
   .topbar-right {
     gap: 7px;
@@ -2015,11 +2028,13 @@ body.light-mode .notif {
    ============================================= */
 @media (max-width: 768px) {
   .topbar {
-    padding: 6px 10px;
+    padding: 0 10px;
+    padding-top: env(safe-area-inset-top, 0px);
     gap: 6px;
-    height: auto;
-    min-height: 50px;
-    flex-wrap: wrap;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    min-height: calc(56px + env(safe-area-inset-top, 0px));
+    flex-wrap: nowrap;
+    align-items: center;
   }
   .topbar-brand {
     min-width: 0;
@@ -2027,12 +2042,14 @@ body.light-mode .notif {
   }
   .topbar-menu-btn { padding: 6px 9px; font-size: 15px; }
   .topbar-right {
-    width: 100%;
+    width: auto;
+    flex: 1;
+    min-width: 0;
     justify-content: flex-end;
     gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding-bottom: 2px;
+    padding-bottom: 0;
   }
   .topbar-right::-webkit-scrollbar { display: none; }
   .topbar-clock { display: none; }
