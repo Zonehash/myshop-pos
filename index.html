@@ -193,6 +193,9 @@ html, body {
   height: 100%;
   overflow: hidden;
 }
+html {
+  height: -webkit-fill-available;
+}
 
 body {
   font-family: 'Noto Sans Myanmar', system-ui, sans-serif;
@@ -200,6 +203,8 @@ body {
   color: var(--clr-t1);
   display: flex;
   flex-direction: column;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
   transition: background var(--ease), color var(--ease);
 }
 
@@ -226,6 +231,8 @@ body {
   z-index: 50;
   box-shadow: 0 1px 0 var(--clr-border), 0 4px 20px rgba(0,0,0,.25);
   position: relative;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 .topbar::before {
   content: '';
@@ -1053,15 +1060,16 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
 #app-root {
   display: none;
   flex-direction: column;
-  height: 100vh;
-  min-height: 100vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: 100vh;
   overflow: hidden;
 }
 
-@supports (height: 100dvh) {
+@supports (height: 100svh) {
   #app-root {
-    height: 100dvh;
-    min-height: 100dvh;
+    max-height: 100svh;
   }
 }
 
