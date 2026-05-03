@@ -536,7 +536,11 @@ body {
 
 #page-sales {
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  min-height: 0;
 }
 
 /* =============================================
@@ -1214,10 +1218,8 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
    PRODUCT GRID
    ============================================= */
 #pgrid {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  min-height: 0;
+  flex: 1 1 auto;
+  overflow: visible;
   padding: 12px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
@@ -12392,7 +12394,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 <main class="main">
 
 <!-- ======================== SALES PAGE ======================== -->
-<div class="page active" id="page-sales" style="display:flex;flex-direction:column;height:100%;overflow:hidden;padding:0;">
+<div class="page active" id="page-sales" style="display:flex;flex-direction:column;height:100%;padding:0;">
 
   <div class="sales-toolbar">
     <input class="inp" id="search-p" placeholder="🔍 ပစ္စည်းရှာမည်..." oninput="filterP()" style="flex:1;max-width:300px;">
