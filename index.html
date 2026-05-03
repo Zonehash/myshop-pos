@@ -733,6 +733,7 @@ body.light-mode .sel:focus { background: #fff; }
 .tbl-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
   border-radius: var(--r-base);
   border: 1px solid var(--clr-border);
   background: var(--clr-s1);
@@ -761,11 +762,14 @@ td {
   padding: 12px 14px;
   border-bottom: 1px solid var(--clr-border);
   vertical-align: middle;
-  transition: background var(--ease);
 }
 
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--clr-s2); }
+/* Touch devices: avoid "sticky hover" + transition repaint (Chrome Android table flicker). */
+@media (hover: hover) and (pointer: fine) {
+  td { transition: background var(--ease); }
+  tr:hover td { background: var(--clr-s2); }
+}
 
 /* =============================================
    STAT CARDS — gradient strip top
@@ -787,9 +791,16 @@ tr:hover td { background: var(--clr-s2); }
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
-  transition: transform var(--ease), box-shadow var(--ease);
 }
-.stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+@media (hover: hover) and (pointer: fine) {
+  .stat {
+    transition: transform var(--ease), box-shadow var(--ease);
+  }
+  .stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+}
+@media (hover: none), (pointer: coarse) {
+  .stat { transition: none; }
+}
 
 .stat::before {
   content: '';
@@ -1223,18 +1234,22 @@ body.light-mode .login-inp::placeholder { color: var(--clr-t3); }
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: all var(--ease);
-}
-
-.pcard:hover {
-  border-color: rgba(167,139,250,.5);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,.28), 0 0 0 1px rgba(167,139,250,.2);
 }
 
 body.light-mode .pcard { background: #fff; }
-body.light-mode .pcard:hover {
-  box-shadow: 0 12px 32px rgba(124,58,237,.12), 0 0 0 1px rgba(124,58,237,.15);
+@media (hover: hover) and (pointer: fine) {
+  .pcard { transition: all var(--ease); }
+  .pcard:hover {
+    border-color: rgba(167,139,250,.5);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.28), 0 0 0 1px rgba(167,139,250,.2);
+  }
+  body.light-mode .pcard:hover {
+    box-shadow: 0 12px 32px rgba(124,58,237,.12), 0 0 0 1px rgba(124,58,237,.15);
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .pcard { transition: none; }
 }
 
 .pcard-media {
@@ -1254,17 +1269,21 @@ body.light-mode .pcard:hover {
   object-fit: contain;
   padding: 6px;
   background: var(--clr-s2);
-  transition: transform var(--ease);
 }
-.pcard:hover .pcard-media img { transform: scale(1.08); }
+@media (hover: hover) and (pointer: fine) {
+  .pcard-media img { transition: transform var(--ease); }
+  .pcard:hover .pcard-media img { transform: scale(1.08); }
+}
 
 .pcard-icon {
   font-size: 48px;
   line-height: 1;
-  transition: transform var(--ease-spring);
   filter: drop-shadow(0 4px 8px rgba(0,0,0,.2));
 }
-.pcard:hover .pcard-icon { transform: scale(1.12) rotate(-4deg); }
+@media (hover: hover) and (pointer: fine) {
+  .pcard-icon { transition: transform var(--ease-spring); }
+  .pcard:hover .pcard-icon { transform: scale(1.12) rotate(-4deg); }
+}
 
 .pcard-body {
   padding: 10px 12px 12px;
@@ -1991,7 +2010,7 @@ body.light-mode .notif {
 /* =============================================
    RESPONSIVE — TABLET
    ============================================= */
-@media (max-width: 1280px) {
+@media (max-width: 1280px), (orientation: landscape) and (max-height: 900px) {
   .topbar-menu-btn { display: inline-flex; align-items: center; justify-content: center; }
   .nav { display: none; }
   /* Keep header visible when native <select> pickers resize the visual viewport (tablet Chrome/Safari). */
@@ -2032,6 +2051,10 @@ body.light-mode .notif {
     width: 120px !important;
   }
   #pgrid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
+  .overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* =============================================
