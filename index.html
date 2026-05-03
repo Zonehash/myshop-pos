@@ -12928,7 +12928,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div style="display:none;">
       <input type="radio" name="pfs" id="pfs-small" value="small"><input type="radio" name="pfs" id="pfs-medium" value="medium" checked><input type="radio" name="pfs" id="pfs-large" value="large">
       <input type="number" id="p-copies" value="1"><input type="checkbox" id="p-autoprint"><input type="checkbox" id="p-show-saleid" checked><input type="checkbox" id="p-show-cust" checked><input type="checkbox" id="p-show-qr" checked><input type="checkbox" id="p-show-note" checked>
-      <input id="p-name"><select id="p-model"><option>Other model</option></select><select id="p-interface"><option value="bluetooth">bluetooth</option><option value="usb">usb</option></select><div id="p-ip-wrap"></div><input id="p-ip-address"><select id="p-mode"><option value="graphic">graphic</option></select><select id="p-width"><option>72 mm</option></select><select id="p-resolution"><option>203 dpi (8 dots/mm)</option></select><input id="p-esc-init"><input id="p-esc-cut" value="1D,56,42,00"><input id="p-esc-drawer" value="1B,70,00,19,FA"><span id="bt-status-lbl"></span><span id="usb-status-lbl"></span>
+      <input type="hidden" id="p-printer-name" value=""><select id="p-model"><option>Other model</option></select><select id="p-interface"><option value="bluetooth">bluetooth</option><option value="usb">usb</option></select><div id="p-ip-wrap"></div><input id="p-ip-address"><select id="p-mode"><option value="graphic">graphic</option></select><select id="p-width"><option>72 mm</option></select><select id="p-resolution"><option>203 dpi (8 dots/mm)</option></select><input id="p-esc-init"><input id="p-esc-cut" value="1D,56,42,00"><input id="p-esc-drawer" value="1B,70,00,19,FA"><span id="bt-status-lbl"></span><span id="usb-status-lbl"></span>
     </div>
   </div>
 </div><!-- /settings -->
@@ -15206,8 +15206,8 @@ function loadSettings(){
   document.getElementById('p-show-cust').checked=P.showCustName!==false;
   document.getElementById('p-show-qr').checked=P.showQR!==false;
   document.getElementById('p-show-note').checked=P.showNote!==false;
-  document.getElementById('p-printer-name').value=P.printerName||'';
-  document.getElementById('p-name').value=P.printerName||'';
+  var pnEl=document.getElementById('p-printer-name');
+  if(pnEl)pnEl.value=P.printerName||'';
   document.getElementById('p-model').value=P.printerModel||'Other model';
   document.getElementById('p-interface').value=P.interface||'bluetooth';
   document.getElementById('p-ip-address').value=P.ipAddress||'';
@@ -15274,7 +15274,8 @@ function savePrintSettings(){
   S.print.showCustName=document.getElementById('p-show-cust').checked;
   S.print.showQR=document.getElementById('p-show-qr').checked;
   S.print.showNote=document.getElementById('p-show-note').checked;
-  S.print.printerName=document.getElementById('p-name').value.trim()||document.getElementById('p-printer-name').value.trim();
+  var pnSave=document.getElementById('p-printer-name');
+  S.print.printerName=pnSave?(pnSave.value||'').trim():'';
   S.print.printerModel=document.getElementById('p-model').value;
   S.print.interface=document.getElementById('p-interface').value;
   S.print.ipAddress=document.getElementById('p-ip-address').value.trim();
