@@ -14161,6 +14161,7 @@ function checkout(){
   var transferAmt=parseInt(document.getElementById('transfer-amt').value.replace(/[^0-9]/g,''))||0;
   var transferFrom=document.getElementById('transfer-from').value||'';
   var custId=cartCustId||null;
+  var saleCustomer=custId?S.customers.find(function(x){return x.id==custId;}):null;
   var sale={
     id:Date.now(),
     rNo:'R'+String(S.sales.length+1).padStart(4,'0'),
@@ -14173,9 +14174,10 @@ function checkout(){
     transferChange:DIGITAL_PAYS.indexOf(S.pay)!==-1?transferAmt-total:0,
     tendered:cashTendered,
     custId:custId||null,
+    customerName:saleCustomer?saleCustomer.name:'',
     note:document.getElementById('note-inp').value
   };
-  if(sale.custId){var c=S.customers.find(function(x){return x.id===sale.custId;});if(c){c.total+=total;c.visits++;}}
+  if(sale.custId){var c=S.customers.find(function(x){return x.id==sale.custId;});if(c){c.total+=total;c.visits++;}}
   if(!S.sales.some(function(s){return s.id==sale.id;}))S.sales.push(sale);
   // Keep history/report pages in sync immediately after each sale.
   renderHistory();
