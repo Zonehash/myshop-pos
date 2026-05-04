@@ -44,6 +44,43 @@ onAuthStateChanged(auth, function(user){
   }
 });
 
+function _docItemId(item){
+  if(!item || item.id===undefined || item.id===null) return '';
+  return String(item.id);
+}
+
+function _mergeDocArrayById(remote, local){
+  const merged = new Map();
+  (Array.isArray(remote)?remote:[]).forEach(function(item){
+    const id = _docItemId(item);
+    if(id) merged.set(id, item);
+  });
+  (Array.isArray(local)?local:[]).forEach(function(item){
+    const id = _docItemId(item);
+    if(id) merged.set(id, item);
+  });
+  return Array.from(merged.values());
+}
+
+function _saleMillis(sale){
+  const v = sale && (sale.dateTime || sale.date || sale.createdAt);
+  if(!v) return 0;
+  if(typeof v === 'number') return v;
+  if(v && typeof v.toMillis === 'function') return v.toMillis();
+  const t = Date.parse(v);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function _mergeCategoryLists(remote, local){
+  const seen = new Set();
+  const out = [];
+  (Array.isArray(local)?local:[]).concat(Array.isArray(remote)?remote:[]).forEach(function(c){
+    const v = String(c||'').trim();
+    if(v && !seen.has(v)){ seen.add(v); out.push(v); }
+  });
+  return out;
+}
+
 window.loadFromFirebase = async function(uid){
   try {
     const snap = await getDoc(doc(db,'shops',uid));
@@ -73,10 +110,24 @@ window.loadFromFirebase = async function(uid){
 window.saveToFirebase = async function(){
   if(!window._fbUser) return;
   try {
-    const toSave = Object.assign({},S);
+    const toSave = JSON.parse(JSON.stringify(S, function(_k, v){
+      if(typeof v === 'number' && !Number.isFinite(v)) return 0;
+      return v;
+    }));
     delete toSave.cart;
-    await setDoc(doc(db,'shops',window._fbUser.uid), toSave);
-  } catch(e){ console.error('Save error',e); }
+    const ref = doc(db,'shops',window._fbUser.uid);
+    const snap = await getDoc(ref);
+    const remote = snap.exists() ? snap.data() : {};
+    toSave.products = _mergeDocArrayById(remote.products, toSave.products);
+    toSave.customers = _mergeDocArrayById(remote.customers, toSave.customers);
+    toSave.sales = _mergeDocArrayById(remote.sales, toSave.sales)
+      .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
+    toSave.categories = _mergeCategoryLists(remote.categories, toSave.categories);
+    await setDoc(ref, toSave, { merge: true });
+  } catch(e){
+    console.error('Save error',e);
+    try { if(typeof notif === 'function') notif('Cloud save မအောင်မြင်ပါ — network/check ပြန်စစ်ပါ', 'err'); } catch(_){}
+  }
 };
 
 window.fbSignUp = async function(){
@@ -87,6 +138,7 @@ window.fbSignUp = async function(){
   try {
     document.getElementById('auth-err').textContent='';
     const cred = await createUserWithEmailAndPassword(auth,email,pass);
+    window._fbUser = cred.user;
     S.settings = S.settings||{};
     S.settings.shopName = shop;
     await saveToFirebase();
@@ -13285,7 +13337,8 @@ function seedC(){
 
 function save(){
   try{localStorage.setItem('pos_v2',JSON.stringify(S));}catch(e){}
-  if(window.saveToFirebase) window.saveToFirebase();
+  if(window.saveToFirebase) return window.saveToFirebase();
+  return Promise.resolve();
 }
 
 function load(){
@@ -13658,7 +13711,7 @@ var qaProductId=null;
 var qaUnitMode='small';
 
 function addToCart(id){
-  var p=S.products.find(function(x){return x.id===id;});
+  var p=S.products.find(function(x){return x.id==id;});
   if(!p)return;
   qaProductId=id;
   var iconEl=document.getElementById('qa-icon');
@@ -13690,7 +13743,7 @@ function addToCart(id){
 
 function qaSetUnitMode(mode){
   qaUnitMode=mode==='big'?'big':'small';
-  var p=S.products.find(function(x){return x.id===qaProductId;});
+  var p=S.products.find(function(x){return x.id==qaProductId;});
   if(!p)return;
   var ratio=p.unitRatio||0;
   var smallLbl=(p.unitSmallLbl||p.unitSmall||'ခု');
@@ -13712,7 +13765,7 @@ function qaQty(d){
 }
 
 function qaUpdateTotal(){
-  var p=S.products.find(function(x){return x.id===qaProductId;});
+  var p=S.products.find(function(x){return x.id==qaProductId;});
   if(!p)return;
   var price=parseInt(document.getElementById('qa-price').value)||0;
   var qty=parseInt(document.getElementById('qa-qty').value)||1;
@@ -13737,7 +13790,7 @@ function qaUpdateTotal(){
 }
 
 function qaConfirm(){
-  var p=S.products.find(function(x){return x.id===qaProductId;});
+  var p=S.products.find(function(x){return x.id==qaProductId;});
   if(!p)return;
   var price=parseInt(document.getElementById('qa-price').value)||p.price;
   var qty=parseInt(document.getElementById('qa-qty').value)||1;
@@ -13745,7 +13798,7 @@ function qaConfirm(){
   var useBig=qaUnitMode==='big'&&ratio>0&&p.unitBig;
   var baseQty=qty*(useBig?ratio:1);
   var unitSmall=p.unitSmall||'';
-  var ex=S.cart.find(function(i){return i.id===p.id&&i.price===price;});
+  var ex=S.cart.find(function(i){return i.id==p.id&&i.price===price;});
   if(ex){ex.qty+=baseQty;ex.name=p.name;}
   else S.cart.push({id:p.id,name:p.name,price:price,qty:baseQty,icon:p.icon,img:p.img,unitSmall:unitSmall,unitRatio:p.unitRatio||0,unitBig:p.unitBig||'',unitSmallLbl:p.unitSmallLbl||'',unitBigLbl:p.unitBigLbl||''});
   var card=document.querySelector('.pcard[data-id="'+p.id+'"]');
@@ -13760,7 +13813,7 @@ function updateCardQtyBadge(id){
   if(!card)return;
   var ex=card.querySelector('.pcard-qty-badge');
   if(ex)ex.remove();
-  var inCart=S.cart.find(function(i){return i.id===id;});
+  var inCart=S.cart.find(function(i){return i.id==id;});
   if(inCart&&inCart.qty>0){
     var b=document.createElement('div');
     b.className='pcard-qty-badge';
@@ -13777,7 +13830,7 @@ function removeCI(id){
 }
 
 function changeQty(id,d){
-  var item=S.cart.find(function(i){return i.id===id;});
+  var item=S.cart.find(function(i){return i.id==id;});
   if(!item)return;
   item.qty+=d;
   if(item.qty<=0){removeCI(id);return;}
@@ -13991,7 +14044,7 @@ function cpFilter(){
 }
 
 function cpSelect(id){
-  var c=S.customers.find(function(x){return x.id===id;});
+  var c=S.customers.find(function(x){return x.id==id;});
   if(!c)return;
   cartCustId=id;
   updateCustPickBtn(c.name);
@@ -14075,10 +14128,19 @@ function checkout(){
   };
   if(sale.custId){var c=S.customers.find(function(x){return x.id===sale.custId;});if(c){c.total+=total;c.visits++;}}
   S.sales.push(sale);
-  save();
-  notif('✓ Receipt: '+sale.rNo,'ok');
-  closeCart();
-  showReceiptModal(sale);
+  // Keep history/report pages in sync immediately after each sale.
+  renderHistory();
+  renderReports();
+  renderProfit();
+  save().then(function(){
+    notif('✓ Receipt: '+sale.rNo,'ok');
+    closeCart();
+    showReceiptModal(sale);
+  }).catch(function(){
+    notif('⚠️ Cloud save မအောင်မြင်ပါ — internet စစ်ပြီး ပြန်သိမ်းပါ','err');
+    closeCart();
+    showReceiptModal(sale);
+  });
 }
 
 // ===== RECEIPT =====
@@ -14488,7 +14550,7 @@ function openProdModal(id){
   var prev=document.getElementById('p-img-prev');
   var hint=document.getElementById('img-hint');
   if(id){
-    var p=S.products.find(function(x){return x.id===id;});
+    var p=S.products.find(function(x){return x.id==id;});
     if(p){
       document.getElementById('p-name').value=p.name;
       document.getElementById('p-price').value=p.price;
@@ -14533,14 +14595,14 @@ function saveProduct(){
   };
   pd.unitSmallLbl=pd.unitSmallLbl||pd.unitSmall;
   pd.unitBigLbl=pd.unitBigLbl||pd.unitBig;
-  if(S.editProd){var i=S.products.findIndex(function(p){return p.id===S.editProd;});if(i>=0)S.products[i]=Object.assign({},S.products[i],pd);notif(t('notif_edited'));}
+  if(S.editProd){var i=S.products.findIndex(function(p){return p.id==S.editProd;});if(i>=0)S.products[i]=Object.assign({},S.products[i],pd);notif(t('notif_edited'));}
   else{pd.id=Date.now();S.products.push(pd);notif(t('notif_saved'));}
-  save();closeM('m-product');renderProdTable();renderPGrid();
+  Promise.resolve(save()).then(function(){closeM('m-product');renderProdTable();renderPGrid();});
 }
 
 function delProd(id){
   if(!confirm(t('delete_confirm')))return;
-  S.products=S.products.filter(function(p){return p.id!==id;});
+  S.products=S.products.filter(function(p){return p.id!=id;});
   save();renderProdTable();renderPGrid();notif(t('notif_deleted'));
 }
 
@@ -14693,7 +14755,7 @@ function renderProfit(){
       var salePrice=Number(i.price)||0;
       var lineTotal=salePrice*qty;
       var key=getProfitCostKey(s.id,idx);
-      var pFromProduct=S.products.find(function(p){ return p.id===i.id; });
+      var pFromProduct=S.products.find(function(p){ return p.id==i.id; });
       var defaultCost=(pFromProduct&&Number(pFromProduct.cost))||0;
       var origPrice=(S.profitCosts[key]!==undefined)?Number(S.profitCosts[key]):defaultCost;
       var lineCost=origPrice*qty;
@@ -15061,7 +15123,7 @@ function renderCusts(){
 function openCustModal(id){
   S.editCust=id||null;
   document.getElementById('cm-title').textContent=id?t('cm_edit_title'):t('cm_add_title');
-  if(id){var c=S.customers.find(function(x){return x.id===id;});if(c){document.getElementById('c-name').value=c.name;document.getElementById('c-phone').value=c.phone||'';document.getElementById('c-addr').value=c.addr||'';document.getElementById('c-note').value=c.note||'';}}
+  if(id){var c=S.customers.find(function(x){return x.id==id;});if(c){document.getElementById('c-name').value=c.name;document.getElementById('c-phone').value=c.phone||'';document.getElementById('c-addr').value=c.addr||'';document.getElementById('c-note').value=c.note||'';}}
   else['c-name','c-phone','c-addr','c-note'].forEach(function(x){document.getElementById(x).value='';});
   openM('m-cust');
 }
