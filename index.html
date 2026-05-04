@@ -22,6 +22,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const SHARED_SHOP_DOC_ID = 'shared';
 
 window._fbAuth = auth;
 window._fbDb = db;
@@ -43,6 +44,11 @@ onAuthStateChanged(auth, function(user){
     document.getElementById('app-root').style.display='none';
   }
 });
+
+function _shopDocRef(){
+  const id = window._fbShopDocId || (window._fbUser && window._fbUser.uid);
+  return doc(db,'shops',id);
+}
 
 function _docItemId(item){
   if(!item || item.id===undefined || item.id===null) return '';
@@ -81,12 +87,41 @@ function _mergeCategoryLists(remote, local){
   return out;
 }
 
+function _mergeShopDocs(base, incoming){
+  const out = Object.assign({}, base||{}, incoming||{});
+  out.products = _mergeDocArrayById((base||{}).products, (incoming||{}).products);
+  out.customers = _mergeDocArrayById((base||{}).customers, (incoming||{}).customers);
+  out.sales = _mergeDocArrayById((base||{}).sales, (incoming||{}).sales)
+    .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
+  out.categories = _mergeCategoryLists((base||{}).categories, (incoming||{}).categories);
+  return out;
+}
+
 window.loadFromFirebase = async function(uid){
   try {
-    const snap = await getDoc(doc(db,'shops',uid));
-    if(snap.exists()){
-      const data = snap.data();
-      Object.assign(S, data);
+    const ownRef = doc(db,'shops',uid);
+    const sharedRef = doc(db,'shops',SHARED_SHOP_DOC_ID);
+    let ownData = null;
+    let sharedData = null;
+    try {
+      const sharedSnap = await getDoc(sharedRef);
+      if(sharedSnap.exists()) sharedData = sharedSnap.data();
+    } catch(e) {
+      console.warn('Shared shop unavailable, fallback to user doc', e);
+    }
+    const ownSnap = await getDoc(ownRef);
+    if(ownSnap.exists()) ownData = ownSnap.data();
+
+    if(sharedData){
+      window._fbShopDocId = SHARED_SHOP_DOC_ID;
+      Object.assign(S, _mergeShopDocs(ownData||{}, sharedData));
+    } else if(ownData){
+      window._fbShopDocId = SHARED_SHOP_DOC_ID;
+      Object.assign(S, ownData);
+      try { await setDoc(sharedRef, ownData, { merge: true }); }
+      catch(e){ window._fbShopDocId = uid; console.warn('Shared shop write unavailable', e); }
+    } else {
+      window._fbShopDocId = SHARED_SHOP_DOC_ID;
     }
     S.pay=''; S.cart=[];
     curLang=S.lang||'my';
@@ -115,7 +150,7 @@ window.saveToFirebase = async function(){
       return v;
     }));
     delete toSave.cart;
-    const ref = doc(db,'shops',window._fbUser.uid);
+    const ref = _shopDocRef();
     const snap = await getDoc(ref);
     const remote = snap.exists() ? snap.data() : {};
     toSave.products = _mergeDocArrayById(remote.products, toSave.products);
@@ -124,8 +159,17 @@ window.saveToFirebase = async function(){
       .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
     toSave.categories = _mergeCategoryLists(remote.categories, toSave.categories);
     await setDoc(ref, toSave, { merge: true });
+    if(window._fbShopDocId && window._fbShopDocId!==window._fbUser.uid){
+      setDoc(doc(db,'shops',window._fbUser.uid), toSave, { merge: true }).catch(function(){});
+    }
   } catch(e){
     console.error('Save error',e);
+    if(window._fbShopDocId!==window._fbUser.uid){
+      try {
+        window._fbShopDocId = window._fbUser.uid;
+        return await saveToFirebase();
+      } catch(_e) {}
+    }
     try { if(typeof notif === 'function') notif('Cloud save မအောင်မြင်ပါ — network/check ပြန်စစ်ပါ', 'err'); } catch(_){}
   }
 };
