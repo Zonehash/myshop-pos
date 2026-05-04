@@ -14164,7 +14164,7 @@ function checkout(){
   var saleCustomer=custId?S.customers.find(function(x){return x.id==custId;}):null;
   var sale={
     id:Date.now(),
-    rNo:'R'+String(S.sales.length+1).padStart(4,'0'),
+    rNo:'R'+String(S.sales.length+1).padStart(5,'0'),
     date:new Date().toISOString(),
     items:S.cart.map(function(i){return Object.assign({},i);}),
     sub:sub,disc:disc,discVal:dv,discType:dt,afterDisc:afterDisc,tax:tax,afterTax:afterTax,
