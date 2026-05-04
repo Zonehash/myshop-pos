@@ -13193,7 +13193,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       </div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-ghost" onclick="saveReceiptEdits()">💾 သိမ်းမည်</button>
+      <button class="btn btn-ghost" id="receipt-save-btn" onclick="saveReceiptEdits()">💾 သိမ်းမည်</button>
       <button class="btn btn-blue" onclick="resetAfterReceipt()">Done</button>
     </div>
   </div>
@@ -14133,16 +14133,21 @@ function custAddrChanged(){}
 function updateCustSectionLabel(){}
 function showCustInfoBox(){}
 
+var checkoutInProgress=false;
+var receiptSaveInProgress=false;
+
 function checkout(){
+  if(checkoutInProgress)return;
   if(!S.cart.length){notif(t('notif_select_items'),'err');return;}
   if(!S.pay){notif(t('notif_select_pay'),'err');return;}
+  checkoutInProgress=true;
   if(DIGITAL_PAYS.indexOf(S.pay)!==-1){
     var sent=parseInt(document.getElementById('transfer-amt').value.replace(/[^0-9]/g,''))||0;
     var grand=getGrand();
-    if(sent<grand){notif(t('notif_short_pay'),'err');return;}
+    if(sent<grand){checkoutInProgress=false;notif(t('notif_short_pay'),'err');return;}
   }
   var cashTendered=S.pay==='cash'?(parseInt(document.getElementById('cash-tendered').value.replace(/[^0-9]/g,''))||0):0;
-  if(S.pay==='cash'&&cashTendered>0&&cashTendered<getGrand()){notif('ပေးငွေပမာဏ မလောက်ပါ','err');return;}
+  if(S.pay==='cash'&&cashTendered>0&&cashTendered<getGrand()){checkoutInProgress=false;notif('ပေးငွေပမာဏ မလောက်ပါ','err');return;}
   var sub=S.cart.reduce(function(s,i){return s+i.price*i.qty;},0);
   var dv=parseFloat(document.getElementById('disc-val').value)||0;
   var dt=document.getElementById('disc-type').value;
@@ -14171,7 +14176,7 @@ function checkout(){
     note:document.getElementById('note-inp').value
   };
   if(sale.custId){var c=S.customers.find(function(x){return x.id===sale.custId;});if(c){c.total+=total;c.visits++;}}
-  S.sales.push(sale);
+  if(!S.sales.some(function(s){return s.id==sale.id;}))S.sales.push(sale);
   // Keep history/report pages in sync immediately after each sale.
   renderHistory();
   renderReports();
@@ -14180,10 +14185,12 @@ function checkout(){
     notif('✓ Receipt: '+sale.rNo,'ok');
     closeCart();
     showReceiptModal(sale);
+    checkoutInProgress=false;
   }).catch(function(){
     notif('⚠️ Cloud save မအောင်မြင်ပါ — internet စစ်ပြီး ပြန်သိမ်းပါ','err');
     closeCart();
     showReceiptModal(sale);
+    checkoutInProgress=false;
   });
 }
 
@@ -14309,6 +14316,7 @@ function buildReceipt(sale,overrides){
 }
 
 function showReceiptModal(sale){
+  receiptSaveInProgress=false;
   currentSale=sale;
   editItemsSaleId=null;
   document.getElementById('re-shopname').value=S.settings.shopName;
@@ -14322,6 +14330,8 @@ function showReceiptModal(sale){
   editItems=sale.items.map(function(i){return Object.assign({},i);});
   editItemsSaleId=sale.id;
   renderItemEditors(editItems);
+  var btn=document.getElementById('receipt-save-btn');
+  if(btn){btn.disabled=false;btn.textContent='💾 သိမ်းမည်';}
   livePreview();
   openM('m-receipt');
   // Web print flow disabled; Flutter app handles printing.
@@ -14403,11 +14413,21 @@ function resetAfterReceipt(){
 }
 
 function saveReceiptEdits(){
-  if(!currentSale)return;
+  if(!currentSale||receiptSaveInProgress)return;
+  receiptSaveInProgress=true;
+  var btn=document.getElementById('receipt-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='သိမ်းနေသည်...';}
   currentSale.paynote=document.getElementById('re-paynote').value;
   currentSale.note=document.getElementById('re-note').value;
   currentSale.items=editItems.map(function(i){return Object.assign({},i);});
-  save();notif(t('notif_saved'),'ok');resetAfterReceipt();
+  save().then(function(){
+    notif(t('notif_saved'),'ok');
+    resetAfterReceipt();
+  }).catch(function(){
+    receiptSaveInProgress=false;
+    if(btn){btn.disabled=false;btn.textContent='💾 သိမ်းမည်';}
+    notif('⚠️ Cloud save မအောင်မြင်ပါ — ပြန်နှိပ်ပါ','err');
+  });
 }
 
 function printAndReset(){resetAfterReceipt();}
