@@ -14873,7 +14873,7 @@ function renderProfit(){
       +'<td class="mono">'+r.qty+'</td>'
       +'<td class="mono">'+f(r.salePrice)+'</td>'
       +'<td class="mono">'+f(r.lineTotal)+'</td>'
-      +'<td class="mono">'+f(Math.round(r.delivery))+(r.deliCompany?'<div style="font-size:10px;color:var(--clr-t2);margin-top:2px;">🚚 '+escHtml(r.deliCompany)+'</div>':'')+'</td>'
+      +'<td class="mono" style="font-size:10px;color:var(--clr-t2);">'+(r.deliCompany?'🚚 '+escHtml(r.deliCompany):'-')+'</td>'
       +'<td style="font-size:10px;">'+escHtml(r.payment)+'</td>'
       +'<td><input class="inp" type="text" inputmode="numeric" pattern="[0-9,]*" value="'+fmtThousandsFromDigits(String(Math.round(r.origPrice)))+'" oninput="(function(el,k){var n=normMoneyStr(el.value);el.value=fmtThousandsFromDigits(n);setProfitCost(k,n||0,true);})(this,\''+r.key+'\')" onchange="renderProfit()" style="width:110px;font-size:10px;padding:4px 6px;"></td>'
       +'<td class="mono" style="color:'+pColor+';font-weight:700;">'+f(Math.round(r.profit))+'</td>'
