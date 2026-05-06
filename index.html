@@ -12876,6 +12876,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   <div class="page-hd">
     <div class="page-title" data-i18n="hist_page_title">📋 မှတ်တမ်း</div>
     <div style="display:flex;gap:7px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="openHistImportModal()">📥 Import</button>
       <button class="btn btn-ghost btn-sm" onclick="exportHistoryCSV()">📤 Export CSV</button>
       <label style="font-size:10px;color:var(--clr-t2);white-space:nowrap;">ရက်</label>
       <input type="date" class="inp" id="hist-date" style="width:150px;" onchange="onHistDateChange()">
@@ -13195,6 +13196,57 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div class="modal-ft">
       <button class="btn btn-ghost" id="receipt-save-btn" onclick="saveReceiptEdits()">💾 သိမ်းမည်</button>
       <button class="btn btn-blue" onclick="resetAfterReceipt()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import History Modal -->
+<div class="overlay" id="m-import-hist">
+  <div class="modal" style="width:500px;max-width:95vw;">
+    <div class="modal-hd">
+      <div class="modal-title">📥 Import History</div>
+      <button class="modal-close-btn" onclick="closeM('m-import-hist')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--clr-t2);margin-bottom:12px;line-height:1.5;">
+        CSV ဖိုင် (သို့) Text ကို paste ချပြီး မှတ်တမ်းဟောင်းများကို သွင်းနိုင်ပါသည်။<br>
+        <b>လိုအပ်သော Column များ:</b> ReceiptNo, Date, Customer, Item, Qty, Price, Delivery, Payment, OriginalPrice, Profit, DeliveryCompany (Optional)
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn btn-ghost btn-sm" id="ih-tab-csv" onclick="setHistImportTab('csv')" style="border-bottom:2px solid var(--clr-accent);color:var(--clr-accent);">CSV File</button>
+        <button class="btn btn-ghost btn-sm" id="ih-tab-text" onclick="setHistImportTab('text')">Paste Text</button>
+      </div>
+
+      <div id="ih-csv">
+        <div class="img-drop" onclick="document.getElementById('ih-file').click();" style="padding:30px 10px;">
+          <input type="file" id="ih-file" accept=".csv" style="display:none;" onchange="handleHistImportFile(event)">
+          <div style="font-size:32px;margin-bottom:10px;">📄</div>
+          <div style="color:var(--clr-t2);font-size:12px;font-weight:600;">CSV ဖိုင် ရွေးရန် နှိပ်ပါ</div>
+        </div>
+      </div>
+
+      <div id="ih-text" style="display:none;">
+        <textarea class="r-edit-field" id="ih-text-area" rows="6" placeholder="CSV text ကို ဒီမှာ paste ချပါ..." style="font-size:11px;font-family:monospace;white-space:pre;"></textarea>
+        <div style="text-align:right;margin-top:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="previewHistImport(document.getElementById('ih-text-area').value)">Preview ကြည့်မည်</button>
+        </div>
+      </div>
+
+      <div id="ih-preview" style="display:none;margin-top:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--clr-t1);margin-bottom:8px;">Preview (<span id="ih-count">0</span> rows)</div>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--clr-border);border-radius:8px;font-size:10px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead style="background:var(--clr-s2);position:sticky;top:0;">
+              <tr><th>Receipt</th><th>Date</th><th>Item</th><th>Qty</th><th>Total</th></tr>
+            </thead>
+            <tbody id="ih-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeM('m-import-hist')">မလုပ်တော့</button>
+      <button class="btn btn-primary" id="ih-confirm-btn" style="display:none;" onclick="confirmHistImport()">✓ မှတ်တမ်းသွင်းမည်</button>
     </div>
   </div>
 </div>
@@ -13524,6 +13576,178 @@ function exportHistoryCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   URL.revokeObjectURL(url);
   notif(df ? ('📤 '+df+' အတွက် CSV export လုပ်ပြီး') : (mf ? ('📤 '+mf+' လအတွက် CSV export လုပ်ပြီး') : '📤 History CSV export လုပ်ပြီး'),'ok');
+}
+
+// ===== IMPORT HISTORY =====
+var histImportItems=[];
+
+function openHistImportModal(){
+  histImportItems=[];
+  document.getElementById('ih-text-area').value='';
+  document.getElementById('ih-preview').style.display='none';
+  document.getElementById('ih-confirm-btn').style.display='none';
+  setHistImportTab('csv');
+  openM('m-import-hist');
+}
+
+function setHistImportTab(tab){
+  ['csv','text'].forEach(function(t){
+    var btn=document.getElementById('ih-tab-'+t);
+    if(btn){
+      btn.style.borderBottom=t===tab?'2px solid var(--clr-accent)':'';
+      btn.style.color=t===tab?'var(--clr-accent)':'';
+    }
+    var el=document.getElementById('ih-'+t);
+    if(el) el.style.display=t===tab?'block':'none';
+  });
+  histImportItems=[];
+  document.getElementById('ih-preview').style.display='none';
+  document.getElementById('ih-confirm-btn').style.display='none';
+}
+
+function handleHistImportFile(evt){
+  var file=evt.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){previewHistImport(e.target.result);};
+  reader.readAsText(file,'UTF-8');
+}
+
+function previewHistImport(csvText){
+  if(!csvText||!csvText.trim()){notif('CSV data မရှိပါ','err');return;}
+  var lines=csvText.trim().split('\n');
+  if(lines.length<2){notif('Data မပြည့်စုံပါ','err');return;}
+  var headers=lines[0].split(',').map(function(h){return h.replace(/^"|"$/g,'').trim().toLowerCase();});
+  
+  var rIdx=headers.indexOf('receiptno');
+  var dIdx=headers.indexOf('date');
+  var cIdx=headers.indexOf('customer');
+  var iIdx=headers.indexOf('item');
+  var qIdx=headers.indexOf('qty');
+  var pIdx=headers.indexOf('price');
+  var deliIdx=headers.indexOf('delivery');
+  var payIdx=headers.indexOf('payment');
+  var origIdx=headers.indexOf('originalprice');
+  var dcIdx=headers.indexOf('deliverycompany');
+  var stIdx=headers.indexOf('status');
+
+  if(rIdx<0||dIdx<0||iIdx<0||qIdx<0||pIdx<0){
+    notif('လိုအပ်သော Column များ မပါပါ (ReceiptNo, Date, Item, Qty, Price)','err');
+    return;
+  }
+
+  // Group by receipt
+  var salesMap={};
+  
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i].trim();if(!line)continue;
+    var parts=[];
+    var inQuotes=false, curr='';
+    for(var j=0;j<line.length;j++){
+      var c=line[j];
+      if(c==='"') inQuotes=!inQuotes;
+      else if(c===',' && !inQuotes){ parts.push(curr); curr=''; }
+      else curr+=c;
+    }
+    parts.push(curr);
+    parts=parts.map(function(p){return p.replace(/^"|"$/g,'').trim();});
+    
+    var rNo=parts[rIdx];
+    if(!rNo)continue;
+    
+    if(!salesMap[rNo]){
+      salesMap[rNo]={
+        id:Date.now()+i, // Generate new ID
+        rNo:rNo,
+        date:parts[dIdx]||new Date().toISOString(),
+        customerName:cIdx>=0?parts[cIdx]:'',
+        items:[],
+        deli:0,
+        pay:payIdx>=0?parts[payIdx]:'cash',
+        deliCompany:dcIdx>=0?parts[dcIdx]:'',
+        cancelled:(stIdx>=0&&parts[stIdx].toLowerCase()==='cancelled')
+      };
+    }
+    
+    var qty=parseFloat(parts[qIdx])||0;
+    var price=parseFloat(parts[pIdx])||0;
+    var itemDeli=deliIdx>=0?(parseFloat(parts[deliIdx])||0):0;
+    var origPrice=origIdx>=0?(parseFloat(parts[origIdx])||0):0;
+    
+    salesMap[rNo].items.push({
+      id:Date.now()+i+10000,
+      name:parts[iIdx]||'Unknown',
+      qty:qty,
+      price:price,
+      _origPrice:origPrice
+    });
+    salesMap[rNo].deli+=itemDeli;
+  }
+  
+  histImportItems=Object.values(salesMap);
+  if(!histImportItems.length){notif('သွင်းရန် မှတ်တမ်းမရှိပါ','err');return;}
+  
+  document.getElementById('ih-count').textContent=histImportItems.length;
+  document.getElementById('ih-tbody').innerHTML=histImportItems.slice(0,10).map(function(s){
+    var total=s.items.reduce(function(sum,it){return sum+(it.qty*it.price);},0)+s.deli;
+    return '<tr>'
+      +'<td style="padding:4px;">'+escHtml(s.rNo)+'</td>'
+      +'<td style="padding:4px;">'+escHtml(String(s.date).slice(0,10))+'</td>'
+      +'<td style="padding:4px;">'+s.items.length+' items</td>'
+      +'<td style="padding:4px;">'+s.items.reduce(function(sum,it){return sum+it.qty;},0)+'</td>'
+      +'<td style="padding:4px;">'+f(total)+'</td>'
+      +'</tr>';
+  }).join('')+(histImportItems.length>10?'<tr><td colspan="5" style="text-align:center;padding:4px;color:var(--clr-t3);">... and '+(histImportItems.length-10)+' more</td></tr>':'');
+  
+  document.getElementById('ih-preview').style.display='block';
+  document.getElementById('ih-confirm-btn').style.display='block';
+}
+
+function confirmHistImport(){
+  if(!histImportItems||!histImportItems.length)return;
+  if(!S.sales)S.sales=[];
+  if(!S.profitCosts)S.profitCosts={};
+  
+  var added=0;
+  histImportItems.forEach(function(s){
+    // Check if receipt already exists
+    var exists=S.sales.find(function(ex){return ex.rNo===s.rNo;});
+    if(exists)return;
+    
+    // Calculate totals
+    var sub=s.items.reduce(function(sum,it){return sum+(it.qty*it.price);},0);
+    s.sub=sub;
+    s.total=sub+s.deli;
+    
+    // Try to match customer
+    if(s.customerName){
+      var cust=S.customers.find(function(c){return c.name.toLowerCase()===s.customerName.toLowerCase();});
+      if(cust) s.custId=cust.id;
+    }
+    
+    S.sales.push(s);
+    
+    // Set profit costs
+    s.items.forEach(function(it,idx){
+      if(it._origPrice>0){
+        var key=getProfitCostKey(s.id,idx);
+        S.profitCosts[key]=it._origPrice;
+      }
+      delete it._origPrice;
+    });
+    
+    added++;
+  });
+  
+  if(added>0){
+    S.sales.sort(function(a,b){return _saleMillis(b)-_saleMillis(a);});
+    save();
+    renderHistory();
+    renderProfit();
+    notif('မှတ်တမ်း '+added+' ခု သွင်းပြီးပါပြီ','ok');
+  } else {
+    notif('အသစ်သွင်းစရာ မှတ်တမ်းမရှိပါ (Receipt နံပါတ်များ တူနေသည်)','warn');
+  }
+  closeM('m-import-hist');
 }
 
 function openImportModal(){
