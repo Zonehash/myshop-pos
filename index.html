@@ -14762,6 +14762,16 @@ function getProfitCostKey(saleId,itemIdx){
   return String(saleId)+'_'+String(itemIdx);
 }
 
+var DELI_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#84cc16', '#14b8a6', '#0ea5e9', '#ec4899'];
+function getDeliColor(name) {
+  if (!name) return 'var(--clr-t2)';
+  var hash = 0;
+  for (var i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return DELI_COLORS[Math.abs(hash) % DELI_COLORS.length];
+}
+
 function normMoneyStr(v){
   return String(v||'').replace(/[^0-9]/g,'');
 }
@@ -14866,6 +14876,7 @@ function renderProfit(){
       d=new Date(r.date).toLocaleDateString('en-GB');
     }catch(e){}
     var pColor=r.profit>=0?'var(--clr-accent)':'var(--clr-danger)';
+    var dColor=getDeliColor(r.deliCompany);
     return '<tr>'
       +'<td style="font-size:10px;color:var(--clr-t2);">'+d+'</td>'
       +'<td>'+escHtml(r.cust)+'</td>'
@@ -14873,7 +14884,7 @@ function renderProfit(){
       +'<td class="mono">'+r.qty+'</td>'
       +'<td class="mono">'+f(r.salePrice)+'</td>'
       +'<td class="mono">'+f(r.lineTotal)+'</td>'
-      +'<td class="mono" style="font-size:10px;color:var(--clr-t2);">'+(r.deliCompany?'🚚 '+escHtml(r.deliCompany):'-')+'</td>'
+      +'<td class="mono" style="font-size:10px;color:'+dColor+';font-weight:600;">'+(r.deliCompany?'🚚 '+escHtml(r.deliCompany):'<span style="color:var(--clr-t2);font-weight:400;">-</span>')+'</td>'
       +'<td style="font-size:10px;">'+escHtml(r.payment)+'</td>'
       +'<td><input class="inp" type="text" inputmode="numeric" pattern="[0-9,]*" value="'+fmtThousandsFromDigits(String(Math.round(r.origPrice)))+'" oninput="(function(el,k){var n=normMoneyStr(el.value);el.value=fmtThousandsFromDigits(n);setProfitCost(k,n||0,true);})(this,\''+r.key+'\')" onchange="renderProfit()" style="width:110px;font-size:10px;padding:4px 6px;"></td>'
       +'<td class="mono" style="color:'+pColor+';font-weight:700;">'+f(Math.round(r.profit))+'</td>'
