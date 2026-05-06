@@ -87,13 +87,25 @@ function _mergeCategoryLists(remote, local){
   return out;
 }
 
-function _mergeShopDocs(base, incoming){
+function _mergeShopDocs(base, incoming, opts){
+  opts = opts||{};
   const out = Object.assign({}, base||{}, incoming||{});
-  out.products = _mergeDocArrayById((base||{}).products, (incoming||{}).products);
-  out.customers = _mergeDocArrayById((base||{}).customers, (incoming||{}).customers);
-  out.sales = _mergeDocArrayById((base||{}).sales, (incoming||{}).sales)
-    .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
-  out.categories = _mergeCategoryLists((base||{}).categories, (incoming||{}).categories);
+
+  /** When incoming is canonical shared shop, use its arrays only. Merging user's mirror doc arrays
+      would resurrect items deleted from shared but still present in shops/{uid}. */
+  if(opts.sharedArraysPrimary && incoming){
+    out.products = Array.isArray(incoming.products) ? incoming.products.slice() : [];
+    out.customers = Array.isArray(incoming.customers) ? incoming.customers.slice() : [];
+    out.sales = (Array.isArray(incoming.sales)?incoming.sales.slice():[])
+      .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
+    out.categories = Array.isArray(incoming.categories) ? incoming.categories.slice() : [];
+  } else {
+    out.products = _mergeDocArrayById((base||{}).products, (incoming||{}).products);
+    out.customers = _mergeDocArrayById((base||{}).customers, (incoming||{}).customers);
+    out.sales = _mergeDocArrayById((base||{}).sales, (incoming||{}).sales)
+      .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
+    out.categories = _mergeCategoryLists((base||{}).categories, (incoming||{}).categories);
+  }
   return out;
 }
 
@@ -114,7 +126,7 @@ window.loadFromFirebase = async function(uid){
 
     if(sharedData){
       window._fbShopDocId = SHARED_SHOP_DOC_ID;
-      Object.assign(S, _mergeShopDocs(ownData||{}, sharedData));
+      Object.assign(S, _mergeShopDocs(ownData||{}, sharedData, {sharedArraysPrimary:true}));
     } else if(ownData){
       window._fbShopDocId = SHARED_SHOP_DOC_ID;
       Object.assign(S, ownData);
@@ -173,7 +185,9 @@ window.saveToFirebase = async function(){
     window._deletedCustomerIds.clear();
     window._deletedCategories.clear();
     if(window._fbShopDocId && window._fbShopDocId!==window._fbUser.uid){
-      setDoc(doc(db,'shops',window._fbUser.uid), toSave, { merge: true }).catch(function(){});
+      try{
+        await setDoc(doc(db,'shops',window._fbUser.uid), toSave, { merge: true });
+      }catch(e){ console.warn('Mirror shops/'+window._fbUser.uid+' sync failed', e); }
     }
   } catch(e){
     console.error('Save error',e);
