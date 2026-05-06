@@ -12853,6 +12853,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div style="display:flex;gap:7px;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="openImportModal()" data-i18n="import_btn">📥 Import</button>
       <button class="btn btn-ghost" onclick="exportProductsCSV()" data-i18n="export_btn">📤 Export CSV</button>
+      <button class="btn btn-ghost" onclick="deleteAllProducts()" style="color:var(--clr-danger);border-color:var(--clr-danger);background:rgba(248,113,113,.06);">🗑️ အားလုံးဖျက်မည်</button>
       <button class="btn btn-ghost" onclick="openCatModal()" data-i18n="add_cat_btn">+ ကဏ္ဍ</button>
       <button class="btn btn-primary" onclick="openProdModal()" data-i18n="add_prod_btn">+ ပစ္စည်းထည့်</button>
     </div>
@@ -13499,6 +13500,19 @@ function toggleTheme(){
 // ===== IMPORT =====
 var importTab='csv';
 var importItems=[];
+
+function deleteAllProducts() {
+  if(!S.products || !S.products.length) {
+    notif('ဖျက်စရာ ပစ္စည်းမရှိပါ', 'warn');
+    return;
+  }
+  if(confirm('သတိပေးချက်: ပစ္စည်းအားလုံးကို ဖျက်ပစ်မှာ သေချာပါသလား? ဒီလုပ်ဆောင်ချက်ကို နောက်ပြန်ဆုတ်လို့ မရပါ။')) {
+    S.products = [];
+    save();
+    renderProdTable();
+    notif('ပစ္စည်းအားလုံးကို ဖျက်လိုက်ပါပြီ', 'ok');
+  }
+}
 
 function exportProductsCSV(){
   if(!S.products||!S.products.length){notif('ပစ္စည်းမရှိသေး','warn');return;}
