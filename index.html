@@ -13326,7 +13326,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     </div>
     <div class="modal-body">
       <div style="display:flex;gap:5px;margin-bottom:15px;">
-        <button class="btn btn-ghost btn-sm" id="imp-tab-csv" onclick="setImportTab('csv')" style="border-bottom:2px solid var(--clr-accent);color:var(--clr-accent);">📄 CSV / Excel</button>
+        <button class="btn btn-ghost btn-sm" id="imp-tab-csv" onclick="setImportTab('csv')" style="border-bottom:2px solid var(--clr-accent);color:var(--clr-accent);">📄 CSV ဖိုင်</button>
         <button class="btn btn-ghost btn-sm" id="imp-tab-text" onclick="setImportTab('text')">📝 စာသား (Text)</button>
         <button class="btn btn-ghost btn-sm" id="imp-tab-loyverse" onclick="setImportTab('loyverse')">🔄 Loyverse Export</button>
       </div>
@@ -13341,8 +13341,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           <label>CSV ဖိုင် ရွေးပါ (သို့) ကော်ပီကူးချထည့်ပါ</label>
           <div style="border:2px dashed var(--clr-border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;margin-bottom:7px;" onclick="document.getElementById('imp-file').click()">
             <div style="font-size:26px;margin-bottom:5px;">📂</div>
-            <div style="font-size:10px;color:var(--clr-t2);">CSV / Excel ဖိုင် ရွေးပါ</div>
-            <input type="file" id="imp-file" accept=".csv,.xlsx,.xls,.txt" style="display:none" onchange="handleImportFile(event)">
+            <div style="font-size:10px;color:var(--clr-t2);">CSV ဖိုင်သာ ရွေးပါ (Excel မှ Save As CSV ဖြင့်သိမ်းပါ)</div>
+            <input type="file" id="imp-file" accept=".csv,.txt" style="display:none" onchange="handleImportFile(event)">
           </div>
           <textarea class="r-edit-field" id="imp-csv-text" rows="6" placeholder="သို့မဟုတ် ဒီနေရာမှာ ကူးချထည့်ပါ&#10;ကော်ဖီ,1500,500,100,အဖျော်ယမကာ,☕&#10;လက်ဖက်ရည်,1000,300,80,အဖျော်ယမကာ,🍵" oninput="previewImport()"></textarea>
         </div>
@@ -13617,6 +13617,11 @@ function setHistImportTab(tab){
 
 function handleHistImportFile(evt){
   var file=evt.target.files[0];if(!file)return;
+  if(file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+    notif('Excel ဖိုင် တိုက်ရိုက်သွင်း၍မရပါ။ Excel မှ Save As CSV ဖြင့်ပြောင်းပြီးမှ သွင်းပါ။', 'err');
+    evt.target.value = '';
+    return;
+  }
   var reader=new FileReader();
   reader.onload=function(e){previewHistImport(e.target.result);};
   reader.readAsText(file,'UTF-8');
@@ -13784,6 +13789,11 @@ function setImportTab(tab){
 
 function handleImportFile(evt){
   var file=evt.target.files[0];if(!file)return;
+  if(file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+    notif('Excel ဖိုင် တိုက်ရိုက်သွင်း၍မရပါ။ Excel မှ Save As CSV ဖြင့်ပြောင်းပြီးမှ သွင်းပါ။', 'err');
+    evt.target.value = '';
+    return;
+  }
   var reader=new FileReader();
   reader.onload=function(e){document.getElementById('imp-csv-text').value=e.target.result;previewImport();};
   reader.readAsText(file,'UTF-8');
