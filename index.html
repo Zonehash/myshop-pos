@@ -145,6 +145,10 @@ window.loadFromFirebase = async function(uid){
   } catch(e){ console.error('Load error',e); }
 };
 
+window._deletedProductIds = window._deletedProductIds || new Set();
+window._deletedCustomerIds = window._deletedCustomerIds || new Set();
+window._deletedCategories = window._deletedCategories || new Set();
+
 window.saveToFirebase = async function(){
   if(!window._fbUser) return;
   try {
@@ -156,12 +160,18 @@ window.saveToFirebase = async function(){
     const ref = _shopDocRef();
     const snap = await getDoc(ref);
     const remote = snap.exists() ? snap.data() : {};
-    toSave.products = _mergeDocArrayById(remote.products, toSave.products);
-    toSave.customers = _mergeDocArrayById(remote.customers, toSave.customers);
+    toSave.products = _mergeDocArrayById(remote.products, toSave.products)
+      .filter(function(p){ return !window._deletedProductIds.has(String(p.id)); });
+    toSave.customers = _mergeDocArrayById(remote.customers, toSave.customers)
+      .filter(function(c){ return !window._deletedCustomerIds.has(String(c.id)); });
     toSave.sales = _mergeDocArrayById(remote.sales, toSave.sales)
       .sort(function(a,b){ return _saleMillis(b)-_saleMillis(a); });
-    toSave.categories = _mergeCategoryLists(remote.categories, toSave.categories);
+    toSave.categories = _mergeCategoryLists(remote.categories, toSave.categories)
+      .filter(function(c){ return !window._deletedCategories.has(c); });
     await setDoc(ref, toSave, { merge: true });
+    window._deletedProductIds.clear();
+    window._deletedCustomerIds.clear();
+    window._deletedCategories.clear();
     if(window._fbShopDocId && window._fbShopDocId!==window._fbUser.uid){
       setDoc(doc(db,'shops',window._fbUser.uid), toSave, { merge: true }).catch(function(){});
     }
@@ -12853,7 +12863,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div style="display:flex;gap:7px;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="openImportModal()" data-i18n="import_btn">📥 Import</button>
       <button class="btn btn-ghost" onclick="exportProductsCSV()" data-i18n="export_btn">📤 Export CSV</button>
-      <button class="btn btn-ghost" onclick="deleteAllProducts()" style="color:var(--clr-danger);border-color:var(--clr-danger);background:rgba(248,113,113,.06);">🗑️ အားလုံးဖျက်မည်</button>
+      <button class="btn btn-ghost" onclick="deleteSelectedProducts()" style="color:var(--clr-danger);border-color:var(--clr-danger);background:rgba(248,113,113,.06);">🗑️ ရွေးထားတာဖျက်မည်</button>
       <button class="btn btn-ghost" onclick="openCatModal()" data-i18n="add_cat_btn">+ ကဏ္ဍ</button>
       <button class="btn btn-primary" onclick="openProdModal()" data-i18n="add_prod_btn">+ ပစ္စည်းထည့်</button>
     </div>
@@ -12868,6 +12878,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <table>
         <thead>
           <tr>
+            <th style="width:30px;text-align:center;"><input type="checkbox" onclick="toggleAllProdChk(this)" style="accent-color:var(--clr-accent);width:16px;height:16px;cursor:pointer;"></th>
             <th data-i18n="th_img">ပုံ</th>
             <th data-i18n="th_name">ပစ္စည်းအမည်</th>
             <th data-i18n="th_cat">ကဏ္ဍ</th>
@@ -13501,16 +13512,21 @@ function toggleTheme(){
 var importTab='csv';
 var importItems=[];
 
-function deleteAllProducts() {
-  if(!S.products || !S.products.length) {
-    notif('ဖျက်စရာ ပစ္စည်းမရှိပါ', 'warn');
+function deleteSelectedProducts() {
+  var checkboxes = document.querySelectorAll('.prod-chk:checked');
+  if(!checkboxes.length) {
+    notif('ဖျက်ရန် ပစ္စည်းများကို ရွေးချယ်ပါ', 'warn');
     return;
   }
-  if(confirm('သတိပေးချက်: ပစ္စည်းအားလုံးကို ဖျက်ပစ်မှာ သေချာပါသလား? ဒီလုပ်ဆောင်ချက်ကို နောက်ပြန်ဆုတ်လို့ မရပါ။')) {
-    S.products = [];
+  if(confirm('ရွေးချယ်ထားသော ပစ္စည်း ' + checkboxes.length + ' ခုကို ဖျက်ပစ်မှာ သေချာပါသလား?')) {
+    var idsToDelete = Array.from(checkboxes).map(function(cb) { return cb.value; });
+    S.products = S.products.filter(function(p) { return !idsToDelete.includes(String(p.id)); });
+    window._deletedProductIds = window._deletedProductIds || new Set();
+    idsToDelete.forEach(function(id) { window._deletedProductIds.add(String(id)); });
     save();
     renderProdTable();
-    notif('ပစ္စည်းအားလုံးကို ဖျက်လိုက်ပါပြီ', 'ok');
+    renderPGrid();
+    notif('ပစ္စည်း ' + checkboxes.length + ' ခုကို ဖျက်လိုက်ပါပြီ', 'ok');
   }
 }
 
@@ -14849,13 +14865,14 @@ function renderProdTable(){
   var fl=S.products.filter(function(p){return(!q||p.name.toLowerCase().includes(q))&&(!cat||p.cat===cat);});
   var tbody=document.getElementById('ptbody');
   if(!tbody)return;
-  if(!fl.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:26px;color:var(--clr-t2)">ပစ္စည်းမတွေ့ပါ</td></tr>';return;}
+  if(!fl.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:26px;color:var(--clr-t2)">ပစ္စည်းမတွေ့ပါ</td></tr>';return;}
   tbody.innerHTML=fl.map(function(p){
     var hasImg=p.img&&p.img.length>0;
     var visual=hasImg?'<img src="'+p.img+'" style="width:36px;height:36px;object-fit:cover;border-radius:5px;">':'<span style="font-size:22px;">'+(p.icon||'📦')+'</span>';
     var unitInfo='-';
     if(p.unitRatio>0&&p.unitBig&&p.unitSmall) unitInfo='1 '+(p.unitBigLbl||p.unitBig)+' = '+p.unitRatio+' '+(p.unitSmallLbl||p.unitSmall);
     return '<tr>'
+      +'<td style="width:30px;text-align:center;"><input type="checkbox" class="prod-chk" value="'+p.id+'" style="accent-color:var(--clr-accent);width:16px;height:16px;cursor:pointer;"></td>'
       +'<td>'+visual+'</td>'
       +'<td><div style="font-weight:600;font-size:12px;">'+p.name+'</div>'+(p.desc?'<div style="font-size:9px;color:var(--clr-t2);">'+p.desc+'</div>':'')+'</td>'
       +'<td><span class="badge badge-purple">'+(p.cat||'-')+'</span></td>'
@@ -14866,6 +14883,13 @@ function renderProdTable(){
       +'</tr>';
   }).join('');
   document.getElementById('prod-stats').innerHTML='<div class="stat"><div class="stat-value">'+S.products.length+'</div><div class="stat-label">📦 ပစ္စည်းအမျိုးအစား</div></div>';
+}
+
+function toggleAllProdChk(source) {
+  var checkboxes = document.querySelectorAll('.prod-chk');
+  for(var i=0; i<checkboxes.length; i++) {
+    checkboxes[i].checked = source.checked;
+  }
 }
 
 function handleImg(evt){
@@ -14957,6 +14981,8 @@ function saveProduct(){
 function delProd(id){
   if(!confirm(t('delete_confirm')))return;
   S.products=S.products.filter(function(p){return p.id!=id;});
+  window._deletedProductIds = window._deletedProductIds || new Set();
+  window._deletedProductIds.add(String(id));
   save();renderProdTable();renderPGrid();notif(t('notif_deleted'));
 }
 
@@ -14977,7 +15003,15 @@ function addCat(){
   save();renderCatListModal();buildCatUI();notif(t('notif_cat_added'));
 }
 
-function delCat(i){S.categories.splice(i,1);save();renderCatListModal();buildCatUI();}
+function delCat(i){
+  var cat = S.categories[i];
+  S.categories.splice(i,1);
+  if(cat) {
+    window._deletedCategories = window._deletedCategories || new Set();
+    window._deletedCategories.add(cat);
+  }
+  save();renderCatListModal();buildCatUI();
+}
 
 // ===== HISTORY =====
 function onHistDateChange(){
@@ -15506,6 +15540,8 @@ function saveCust(){
 function delCust(id){
   if(!confirm(t('delete_confirm')))return;
   S.customers=S.customers.filter(function(c){return c.id!==id;});
+  window._deletedCustomerIds = window._deletedCustomerIds || new Set();
+  window._deletedCustomerIds.add(String(id));
   save();renderCusts();updateCartCust();notif(t('notif_deleted'));
 }
 
