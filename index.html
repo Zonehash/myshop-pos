@@ -12414,6 +12414,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /***/ })
 /******/ ])["default"];
 });</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -13617,14 +13618,28 @@ function setHistImportTab(tab){
 
 function handleHistImportFile(evt){
   var file=evt.target.files[0];if(!file)return;
-  if(file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
-    notif('Excel ဖိုင် တိုက်ရိုက်သွင်း၍မရပါ။ Excel မှ Save As CSV ဖြင့်ပြောင်းပြီးမှ သွင်းပါ။', 'err');
-    evt.target.value = '';
-    return;
+  var name = file.name.toLowerCase();
+  if(name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, {type: 'array'});
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
+        var csvText = XLSX.utils.sheet_to_csv(worksheet);
+        previewHistImport(csvText);
+      } catch(err) {
+        notif('Excel ဖိုင် ဖတ်၍မရပါ', 'err');
+        console.error(err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader=new FileReader();
+    reader.onload=function(e){previewHistImport(e.target.result);};
+    reader.readAsText(file,'UTF-8');
   }
-  var reader=new FileReader();
-  reader.onload=function(e){previewHistImport(e.target.result);};
-  reader.readAsText(file,'UTF-8');
 }
 
 function previewHistImport(csvText){
@@ -13789,14 +13804,29 @@ function setImportTab(tab){
 
 function handleImportFile(evt){
   var file=evt.target.files[0];if(!file)return;
-  if(file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
-    notif('Excel ဖိုင် တိုက်ရိုက်သွင်း၍မရပါ။ Excel မှ Save As CSV ဖြင့်ပြောင်းပြီးမှ သွင်းပါ။', 'err');
-    evt.target.value = '';
-    return;
+  var name = file.name.toLowerCase();
+  if(name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, {type: 'array'});
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
+        var csvText = XLSX.utils.sheet_to_csv(worksheet);
+        document.getElementById('imp-csv-text').value = csvText;
+        previewImport();
+      } catch(err) {
+        notif('Excel ဖိုင် ဖတ်၍မရပါ', 'err');
+        console.error(err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader=new FileReader();
+    reader.onload=function(e){document.getElementById('imp-csv-text').value=e.target.result;previewImport();};
+    reader.readAsText(file,'UTF-8');
   }
-  var reader=new FileReader();
-  reader.onload=function(e){document.getElementById('imp-csv-text').value=e.target.result;previewImport();};
-  reader.readAsText(file,'UTF-8');
 }
 
 function handleLoyverseFile(evt){
