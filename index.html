@@ -13229,8 +13229,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       </div>
 
       <div id="ih-csv">
-        <div class="img-drop" onclick="document.getElementById('ih-file').click();" style="padding:30px 10px;">
-          <input type="file" id="ih-file" accept=".csv" style="display:none;" onchange="handleHistImportFile(event)">
+        <div class="img-drop" onclick="clearFileInput('ih-file');document.getElementById('ih-file').click();" style="padding:30px 10px;">
+          <input type="file" id="ih-file" accept=".csv,.txt,.xlsx,.xls" style="display:none;" onchange="handleHistImportFile(event)">
           <div style="font-size:32px;margin-bottom:10px;">📄</div>
           <div style="color:var(--clr-t2);font-size:12px;font-weight:600;">CSV ဖိုင် ရွေးရန် နှိပ်ပါ</div>
         </div>
@@ -13341,7 +13341,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         </div>
         <div class="fg">
           <label>CSV ဖိုင် ရွေးပါ (သို့) ကော်ပီကူးချထည့်ပါ</label>
-          <div style="border:2px dashed var(--clr-border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;margin-bottom:7px;" onclick="document.getElementById('imp-file').click()">
+          <div style="border:2px dashed var(--clr-border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;margin-bottom:7px;" onclick="clearFileInput('imp-file');document.getElementById('imp-file').click();">
             <div style="font-size:26px;margin-bottom:5px;">📂</div>
             <div style="font-size:10px;color:var(--clr-t2);">CSV (.csv) သို့မဟုတ် Excel (.xlsx, .xls) ဖိုင်</div>
             <input type="file" id="imp-file" accept=".csv,.txt,.xlsx,.xls" style="display:none" onchange="handleImportFile(event)">
@@ -13364,7 +13364,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           <div>Loyverse → Items → Export Items → CSV ဒေါင်းလုတ် → ဒီနေရာ upload လုပ်ပါ</div>
           <div style="margin-top:3px;color:var(--clr-accent);">✓ Item Name, Price, Cost, Category, SKU တွေ အလိုအလျောက် map လုပ်ပေးမည်</div>
         </div>
-        <div style="border:2px dashed var(--clr-border);border-radius:8px;padding:18px;text-align:center;cursor:pointer;" onclick="document.getElementById('imp-loyverse-file').click()">
+        <div style="border:2px dashed var(--clr-border);border-radius:8px;padding:18px;text-align:center;cursor:pointer;" onclick="clearFileInput('imp-loyverse-file');document.getElementById('imp-loyverse-file').click();">
           <div style="font-size:30px;margin-bottom:7px;">🔄</div>
           <div style="font-size:11px;color:var(--clr-t2);">Loyverse CSV ဖိုင် ရွေးပါ</div>
           <input type="file" id="imp-loyverse-file" accept=".csv" style="display:none" onchange="handleLoyverseFile(event)">
@@ -13594,6 +13594,7 @@ function exportHistoryCSV(){
 var histImportItems=[];
 
 function openHistImportModal(){
+  resetHistImportFileInput();
   histImportItems=[];
   document.getElementById('ih-text-area').value='';
   document.getElementById('ih-preview').style.display='none';
@@ -13790,6 +13791,7 @@ function confirmHistImport(){
 }
 
 function openImportModal(){
+  resetProductImportFileInputs();
   importItems=[];
   document.getElementById('imp-csv-text').value='';
   document.getElementById('imp-text-area').value='';
@@ -16428,8 +16430,23 @@ function saveSettings(){
 }
 
 // ===== MODAL =====
+function clearFileInput(id){
+  var el=document.getElementById(id);
+  if(el) el.value='';
+}
+function resetProductImportFileInputs(){
+  clearFileInput('imp-file');
+  clearFileInput('imp-loyverse-file');
+}
+function resetHistImportFileInput(){
+  clearFileInput('ih-file');
+}
 function openM(id){document.getElementById(id).classList.add('open');}
-function closeM(id){document.getElementById(id).classList.remove('open');}
+function closeM(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='m-import') resetProductImportFileInputs();
+  if(id==='m-import-hist') resetHistImportFileInput();
+}
 document.querySelectorAll('.overlay').forEach(function(o){
   o.addEventListener('click',function(e){
     if(e.target===o){
