@@ -13220,8 +13220,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     </div>
     <div class="modal-body">
       <div style="font-size:11px;color:var(--clr-t2);margin-bottom:12px;line-height:1.5;">
-        CSV ဖိုင် (သို့) Text ကို paste ချပြီး မှတ်တမ်းဟောင်းများကို သွင်းနိုင်ပါသည်။<br>
-        <b>လိုအပ်သော Column များ:</b> ReceiptNo, Date, Customer, Item, Qty, Price, Delivery, Payment, OriginalPrice, Profit, DeliveryCompany (Optional)
+        Web မှာ <b>📤 Export CSV</b> လုပ်ထုတ်ထားသော ဖိုင်ကို တိုက်ရိုက် ပြန်သွင်းနိုင်ပါတယ်။ ယခင် ဖော်မတ် (အဓိပ္ပါယ်တူခေါင်းစဉ်များ) လည်း သုံးနိုင်ပါသည်။
+        လိုချင်သော အချက်များ — <code style="font-size:10px;">Receipt No</code>၊ <code style="font-size:10px;">Date / Date Time</code>၊ ပစ္စည်းအမည် (<code>Product</code> သို့မဟုတ် <code>Item</code>)၊ <code>Qty</code>၊ စျေး (<code>Unit Price</code> သို့မဟုတ် <code>Price</code>) ပါသင့်ပါသည်။ Payment / Customer စသည်ဖြင့် အပါအဝင်ပါ။
       </div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <button class="btn btn-ghost btn-sm" id="ih-tab-csv" onclick="setHistImportTab('csv')" style="border-bottom:2px solid var(--clr-accent);color:var(--clr-accent);">CSV File</button>
@@ -13652,67 +13652,109 @@ function handleHistImportFile(evt){
   }
 }
 
+function histNormHeaderCell(cell){
+  return String(cell==null?'':cell).replace(/^"|"$/g,'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+
+function histFindColumnIndex(headerCells, synonyms){
+  var NH=headerCells.map(histNormHeaderCell);
+  var si,hi,want;
+  for(si=0;si<synonyms.length;si++){
+    want=String(synonyms[si]).toLowerCase().replace(/\s+/g,' ').trim();
+    if(!want)continue;
+    for(hi=0;hi<NH.length;hi++){if(NH[hi]===want)return hi;}
+  }
+  for(si=0;si<synonyms.length;si++){
+    want=String(synonyms[si]).toLowerCase().replace(/\s+/g,' ').trim();
+    if(!want)continue;
+    for(hi=0;hi<NH.length;hi++){
+      if(NH[hi].indexOf(want)<0&&!(want.length>4&&want.indexOf(NH[hi])>=0))continue;
+      if(want==='delivery'&&NH[hi].indexOf('company')>=0)continue;
+      if(want==='total'&&NH[hi].indexOf('line')>=0)continue;
+      return hi;
+    }
+  }
+  return -1;
+}
+
 function previewHistImport(csvText){
   if(!csvText||!csvText.trim()){notif('CSV data မရှိပါ','err');return;}
-  var lines=csvText.trim().split('\n');
+  var lines=csvText.trim().split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
   if(lines.length<2){notif('Data မပြည့်စုံပါ','err');return;}
-  var headers=lines[0].split(',').map(function(h){return h.replace(/^"|"$/g,'').trim().toLowerCase();});
-  
-  var rIdx=headers.indexOf('receiptno');
-  var dIdx=headers.indexOf('date');
-  var cIdx=headers.indexOf('customer');
-  var iIdx=headers.indexOf('item');
-  var qIdx=headers.indexOf('qty');
-  var pIdx=headers.indexOf('price');
-  var deliIdx=headers.indexOf('delivery');
-  var payIdx=headers.indexOf('payment');
-  var origIdx=headers.indexOf('originalprice');
-  var dcIdx=headers.indexOf('deliverycompany');
-  var stIdx=headers.indexOf('status');
-
+  var headerCells=splitCSVLine(lines[0]);
+  var NH=headerCells.map(histNormHeaderCell);
+  var rIdx=histFindColumnIndex(headerCells,['receipt no','receiptno','receipt #','receipt number','r-no','r no']);
+  var dIdx=histFindColumnIndex(headerCells,['date time','datetime','date & time','sold date','sale date','date']);
+  var cIdx=histFindColumnIndex(headerCells,['customer','cust','client','customer name']);
+  var addrIdx=histFindColumnIndex(headerCells,['address','addr','delivery address','လိပ်စာ']);
+  var iIdx=histFindColumnIndex(headerCells,['product','item','item name','sku','ပစ္စည်း']);
+  var qIdx=histFindColumnIndex(headerCells,['qty','quantity','အရေအတွက်','qty.']);
+  var pIdx=histFindColumnIndex(headerCells,['unit price','unitprice','selling price','sell price','price','ဈေးနှုန်း','rate']);
+  var lineTotIdx=histFindColumnIndex(headerCells,['line total','line amount','subtotal line']);
+  var discIdx=histFindColumnIndex(headerCells,['discount','disc','လျော့']);
+  var deliIdx=histFindColumnIndex(headerCells,['delivery fee','delivery charge','shipping fee','shipping cost','deli fee']);
+  if(deliIdx<0) deliIdx=histFindColumnIndex(headerCells,['delivery','deli','ပို့စရိတ်','ကုန်ကျ']);
+  if(deliIdx>=0 && NH[deliIdx].indexOf('company')>=0) deliIdx=-1;
+  var payIdx=histFindColumnIndex(headerCells,['payment','pay method','paid','ငွေပေးခြင်း']);
+  var gtIdx=histFindColumnIndex(headerCells,['grand total','order total','invoice total']);
+  var origIdx=histFindColumnIndex(headerCells,['originalprice','original price','cost']);
+  var dcIdx=histFindColumnIndex(headerCells,['delivery company','deli company','courier','deliverycompany']);
+  var stIdx=histFindColumnIndex(headerCells,['status','state']);
+  if(deliIdx>=0&&dcIdx>=0&&deliIdx===dcIdx)dcIdx=-1;
   if(rIdx<0||dIdx<0||iIdx<0||qIdx<0||pIdx<0){
-    notif('လိုအပ်သော Column များ မပါပါ (ReceiptNo, Date, Item, Qty, Price)','err');
+    notif('ခေါင်းစဉ် မတွေ့ပါ — Receipt No, Date/Date Time, Product/Item, Qty, Unit Price လိုအပ်ပါသည်။ (Web Export CSV ထုတ်ပြီးတူဖိုင် သုံးနိုင်ပါသည်)','err');
     return;
   }
+  var deliHdrNorm=deliIdx>=0?NH[deliIdx]:'';
+  var deliOnce=(deliIdx>=0&&(deliHdrNorm.indexOf('fee')>=0||deliHdrNorm.indexOf('shipping')>=0||deliHdrNorm.indexOf('charge')>=0));
+  if(deliHdrNorm==='delivery'||deliHdrNorm==='deli') deliOnce=false;
 
-  // Group by receipt
   var salesMap={};
-  
   for(var i=1;i<lines.length;i++){
-    var line=lines[i].trim();if(!line)continue;
+    var line=lines[i];if(!line)continue;
     var parts=[];
     var inQuotes=false, curr='';
     for(var j=0;j<line.length;j++){
-      var c=line[j];
-      if(c==='"') inQuotes=!inQuotes;
-      else if(c===',' && !inQuotes){ parts.push(curr); curr=''; }
-      else curr+=c;
+      var ch=line[j];
+      if(ch==='"') inQuotes=!inQuotes;
+      else if(ch===',' && !inQuotes){ parts.push(curr); curr=''; }
+      else curr+=ch;
     }
     parts.push(curr);
     parts=parts.map(function(p){return p.replace(/^"|"$/g,'').trim();});
-    
+    while(parts.length<headerCells.length)parts.push('');
     var rNo=parts[rIdx];
     if(!rNo)continue;
-    
     if(!salesMap[rNo]){
+      var payRaw=payIdx>=0?(parts[payIdx]||''):'';
+      var delVal=deliIdx>=0?(parseFloat(String(parts[deliIdx]||'').replace(/[^0-9.-]/g,''))||0):0;
+      var dscVal=discIdx>=0?(parseFloat(String(parts[discIdx]||'').replace(/[^0-9.-]/g,''))||0):0;
+      var gtot=gtIdx>=0?parseFloat(String(parts[gtIdx]||'').replace(/[^0-9.-]/g,'')):NaN;
       salesMap[rNo]={
-        id:Date.now()+i, // Generate new ID
+        id:Date.now()+i,
         rNo:rNo,
         date:parts[dIdx]||new Date().toISOString(),
         customerName:cIdx>=0?parts[cIdx]:'',
+        deliAddr:addrIdx>=0?parts[addrIdx]:'',
         items:[],
-        deli:0,
-        pay:payIdx>=0?parts[payIdx]:'cash',
+        deli:delVal,
+        disc:dscVal,
+        pay:payRaw,
         deliCompany:dcIdx>=0?parts[dcIdx]:'',
-        cancelled:(stIdx>=0&&parts[stIdx].toLowerCase()==='cancelled')
+        cancelled:(stIdx>=0&&String(parts[stIdx]||'').toLowerCase().indexOf('cancel')>=0),
+        _grandTot:!isNaN(gtot)?gtot:null,
+        _deliMode: deliOnce?'once':'sum'
       };
+    }else if(!deliOnce&&deliIdx>=0){
+      salesMap[rNo].deli+=(parseFloat(String(parts[deliIdx]||'').replace(/[^0-9.-]/g,''))||0);
     }
-    
-    var qty=parseFloat(parts[qIdx])||0;
-    var price=parseFloat(parts[pIdx])||0;
-    var itemDeli=deliIdx>=0?(parseFloat(parts[deliIdx])||0):0;
-    var origPrice=origIdx>=0?(parseFloat(parts[origIdx])||0):0;
-    
+    var qty=parseFloat(String(parts[qIdx]||'').replace(/[^0-9.-]/g,''))||0;
+    var price=parseFloat(String(parts[pIdx]||'').replace(/[^0-9.-]/g,''))||0;
+    if(lineTotIdx>=0&&!price){
+      var lt=parseFloat(String(parts[lineTotIdx]||'').replace(/[^0-9.-]/g,''))||0;
+      if(qty>0)price=lt/qty;
+    }
+    var origPrice=origIdx>=0?(parseFloat(String(parts[origIdx]||'').replace(/[^0-9.-]/g,''))||0):0;
     salesMap[rNo].items.push({
       id:Date.now()+i+10000,
       name:parts[iIdx]||'Unknown',
@@ -13720,15 +13762,13 @@ function previewHistImport(csvText){
       price:price,
       _origPrice:origPrice
     });
-    salesMap[rNo].deli+=itemDeli;
   }
-  
   histImportItems=Object.values(salesMap);
   if(!histImportItems.length){notif('သွင်းရန် မှတ်တမ်းမရှိပါ','err');return;}
-  
   document.getElementById('ih-count').textContent=histImportItems.length;
   document.getElementById('ih-tbody').innerHTML=histImportItems.slice(0,10).map(function(s){
-    var total=s.items.reduce(function(sum,it){return sum+(it.qty*it.price);},0)+s.deli;
+    var total=s.items.reduce(function(sum,it){return sum+(it.qty*it.price);},0)+(s.deli||0)-(s.disc||0);
+    if(s._grandTot!=null&&!isNaN(s._grandTot))total=s._grandTot;
     return '<tr>'
       +'<td style="padding:4px;">'+escHtml(s.rNo)+'</td>'
       +'<td style="padding:4px;">'+escHtml(String(s.date).slice(0,10))+'</td>'
@@ -13737,7 +13777,6 @@ function previewHistImport(csvText){
       +'<td style="padding:4px;">'+f(total)+'</td>'
       +'</tr>';
   }).join('')+(histImportItems.length>10?'<tr><td colspan="5" style="text-align:center;padding:4px;color:var(--clr-t3);">... and '+(histImportItems.length-10)+' more</td></tr>':'');
-  
   document.getElementById('ih-preview').style.display='block';
   document.getElementById('ih-confirm-btn').style.display='block';
 }
@@ -13753,10 +13792,18 @@ function confirmHistImport(){
     var exists=S.sales.find(function(ex){return ex.rNo===s.rNo;});
     if(exists)return;
     
-    // Calculate totals
     var sub=s.items.reduce(function(sum,it){return sum+(it.qty*it.price);},0);
     s.sub=sub;
-    s.total=sub+s.deli;
+    s.disc=Number(s.disc)||0;
+    s.deli=Number(s.deli)||0;
+    if(s.deliAddr)s.deliAddr=String(s.deliAddr).trim();
+    s.pay=(typeof s.pay==='string'&&Object.keys(PAY_NAMES).indexOf(s.pay)>=0)?s.pay:resolvePayImported(s.pay);
+
+    if(s._grandTot!=null&&!isNaN(Number(s._grandTot))) s.total=Number(s._grandTot);
+    else s.total=Math.max(0,sub+s.deli-s.disc);
+
+    delete s._grandTot;
+    delete s._deliMode;
     
     // Try to match customer
     if(s.customerName){
@@ -14442,6 +14489,26 @@ var PAY_NAMES={
   kbz:'🏦 KBZ Pay',cb:'🔵 CB Pay',aya:'🏛️ AYA Bank'
 };
 var DIGITAL_PAYS=['kpay','wave','ayapay','kbz','cb','aya'];
+
+function resolvePayImported(raw){
+  var t=String(raw==null?'':raw).trim().toLowerCase().replace(/\s+/g,' ');
+  if(!t)return'cash';
+  for(var k in PAY_NAMES){
+    if(!Object.prototype.hasOwnProperty.call(PAY_NAMES,k))continue;
+    if(t===k)return k;
+    var lab=String(PAY_NAMES[k]).toLowerCase();
+    if(t===lab||lab.indexOf(t)>=0&&t.length>=3||t.indexOf(k)>=0)return k;
+  }
+  if(/cash|💵/.test(t))return'cash';
+  if(/cod|🛵/.test(t))return'cod';
+  if(/kpay|k\s*pay/.test(t)||/📱/.test(String(raw)))return'kpay';
+  if(/wave|🌊/.test(t))return'wave';
+  if(/aya\s*pay|ayapay/.test(t))return'ayapay';
+  if(/kbz/.test(t))return'kbz';
+  if(/\bcb\s*pay\b|\bcb\b/.test(t))return'cb';
+  if(/aya\s*bank|\baya\b/.test(t))return'aya';
+  return'cash';
+}
 
 function selPay(m){
   S.pay=m;
