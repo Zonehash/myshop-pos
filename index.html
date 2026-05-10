@@ -14987,40 +14987,55 @@ function saveReceiptEdits(){
   receiptSaveInProgress=true;
   var btn=document.getElementById('receipt-save-btn');
   if(btn){btn.disabled=true;btn.textContent='သိမ်းနေသည်...';}
-  currentSale.paynote=document.getElementById('re-paynote').value;
-  currentSale.note=document.getElementById('re-note').value;
-  currentSale.items=editItems.map(function(i){return Object.assign({},i);});
-  var sub=(currentSale.items||[]).reduce(function(sum,it){
+  var saleId=currentSale.id;
+  var saleIdx=(S.sales||[]).findIndex(function(s){return String(s.id)===String(saleId);});
+  if(saleIdx<0){
+    receiptSaveInProgress=false;
+    if(btn){btn.disabled=false;btn.textContent='💾 သိမ်းမည်';}
+    notif('❌ Sale မတွေ့ပါ','err');
+    return;
+  }
+  var targetSale=S.sales[saleIdx];
+  targetSale.paynote=document.getElementById('re-paynote').value;
+  targetSale.note=document.getElementById('re-note').value;
+  targetSale.items=editItems.map(function(i){return Object.assign({},i);});
+  var sub=(targetSale.items||[]).reduce(function(sum,it){
     var qty=parseFloat(it.qty), price=parseFloat(it.price);
     qty=isNaN(qty)?1:qty;
     price=isNaN(price)?0:price;
     return sum+(qty*price);
   },0);
-  var discType=(currentSale.discType||'').toLowerCase();
-  var discVal=parseFloat(currentSale.discVal);
+  var discType=(targetSale.discType||'').toLowerCase();
+  var discVal=parseFloat(targetSale.discVal);
   discVal=isNaN(discVal)?0:discVal;
-  var disc=discType==='pct'?(sub*discVal/100):(discVal||parseFloat(currentSale.disc)||0);
+  var disc=discType==='pct'?(sub*discVal/100):(discVal||parseFloat(targetSale.disc)||0);
   disc=Math.min(Math.max(0,disc),sub);
   var afterDisc=sub-disc;
-  var baseAfterDisc=parseFloat(currentSale.afterDisc);
-  var baseTax=parseFloat(currentSale.tax);
+  var baseAfterDisc=parseFloat(targetSale.afterDisc);
+  var baseTax=parseFloat(targetSale.tax);
   baseAfterDisc=isNaN(baseAfterDisc)?0:baseAfterDisc;
   baseTax=isNaN(baseTax)?0:baseTax;
   var taxPct=(baseAfterDisc>0&&baseTax>0)?(baseTax*100/baseAfterDisc):((S.receipt&&S.receipt.showTax)?(parseFloat(S.receipt.taxPct)||0):0);
   var tax=afterDisc*taxPct/100;
-  var deli=parseFloat(currentSale.deli);
+  var deli=parseFloat(targetSale.deli);
   deli=isNaN(deli)?0:deli;
   var total=afterDisc+tax+deli;
-  currentSale.sub=sub;
-  currentSale.disc=disc;
-  currentSale.afterDisc=afterDisc;
-  currentSale.tax=tax;
-  currentSale.afterTax=afterDisc+tax;
-  currentSale.total=total;
-  if(typeof currentSale.transferAmt==='number'&&DIGITAL_PAYS.indexOf(currentSale.pay)!==-1){
-    currentSale.transferChange=Math.max(0,(currentSale.transferAmt||0)-total);
+  targetSale.sub=sub;
+  targetSale.disc=disc;
+  targetSale.afterDisc=afterDisc;
+  targetSale.tax=tax;
+  targetSale.afterTax=afterDisc+tax;
+  targetSale.total=total;
+  if(typeof targetSale.transferAmt==='number'&&DIGITAL_PAYS.indexOf(targetSale.pay)!==-1){
+    targetSale.transferChange=Math.max(0,(targetSale.transferAmt||0)-total);
   }
-  save().then(function(){
+  currentSale=targetSale;
+  var persistTask=save();
+  if(!persistTask&&window.saveToFirebase)persistTask=window.saveToFirebase();
+  Promise.resolve(persistTask).then(function(){
+    renderHistory();
+    if(typeof renderReports==='function')renderReports();
+    if(typeof renderProfit==='function')renderProfit();
     notif(t('notif_saved'),'ok');
     resetAfterReceipt();
   }).catch(function(){
