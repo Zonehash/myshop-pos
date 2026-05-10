@@ -14788,6 +14788,10 @@ function buildReceipt(sale,overrides){
     return '<div class="rcpt-row"><span class="lbl">'+lbl+'</span><span class="val" style="'+b+'">'+val+'</span></div>';
   }
   function divider(solid){return '<hr class="rcpt-divider'+(solid?' solid':'')+'"/>';}
+  function toNum(v){
+    var n=parseFloat(v);
+    return isNaN(n)?0:n;
+  }
 
   // ── Header ──
   var logoHtml=logoIsImg
@@ -14813,7 +14817,7 @@ function buildReceipt(sale,overrides){
   // ── Items ──
   var editSub=0;
   var itemsHtml=items.map(function(it){
-    var qty=it.qty||1, price=it.price||0, line=qty*price;
+    var qty=Math.max(1,toNum(it.qty)||1), price=toNum(it.price), line=qty*price;
     editSub+=line;
     return '<div class="rcpt-item-name">'+escHtml(it.name||'')+'</div>'
       +'<div class="rcpt-item-sub"><span>'+qty+' x '+f(price)+'</span><span style="font-weight:700;">'+f(line)+'</span></div>';
@@ -14821,14 +14825,20 @@ function buildReceipt(sale,overrides){
 
   // ── Summary ──
   var sub=editSub;
-  var disc=sale.disc||0;
-  var tax=sale.tax||0;
-  var deli=sale.deli||0;
-  var total=sale.total||0;
+  var discType=(sale.discType||'').toLowerCase();
+  var discVal=toNum(sale.discVal);
+  var disc=discType==='pct' ? (sub*discVal/100) : (discVal||toNum(sale.disc));
+  disc=Math.min(Math.max(0,disc),sub);
+  var afterDisc=sub-disc;
+  var savedAfterDisc=toNum(sale.afterDisc);
+  var savedTax=toNum(sale.tax);
+  var taxPct=(savedAfterDisc>0&&savedTax>0)?(savedTax*100/savedAfterDisc):((S.receipt&&S.receipt.showTax)?toNum(S.receipt.taxPct):0);
+  var tax=afterDisc*taxPct/100;
+  var deli=toNum(sale.deli);
+  var total=afterDisc+tax+deli;
   var summarySection = divider()
-    + (sub!==total||disc||tax?row('စုစုပေါင်း:',f(sub)+' ကျပ်'):'')
     + (disc>0?row('လျှော့ဈေး:','-'+f(disc)+' ကျပ်'):'')
-    + (tax>0?row('Tax ('+R.taxPct+'%):', f(tax)+' ကျပ်'):'')
+    + (tax>0?row('Tax ('+f(taxPct)+'%):', f(tax)+' ကျပ်'):'')
     + (deli>0?row('Delivery ခ:', f(deli)+' ကျပ်'):'')
     + '<div class="rcpt-total"><span>ကျသင့်ငွေ</span><span>'+f(total)+' ကျပ်</span></div>';
 
@@ -14980,6 +14990,36 @@ function saveReceiptEdits(){
   currentSale.paynote=document.getElementById('re-paynote').value;
   currentSale.note=document.getElementById('re-note').value;
   currentSale.items=editItems.map(function(i){return Object.assign({},i);});
+  var sub=(currentSale.items||[]).reduce(function(sum,it){
+    var qty=parseFloat(it.qty), price=parseFloat(it.price);
+    qty=isNaN(qty)?1:qty;
+    price=isNaN(price)?0:price;
+    return sum+(qty*price);
+  },0);
+  var discType=(currentSale.discType||'').toLowerCase();
+  var discVal=parseFloat(currentSale.discVal);
+  discVal=isNaN(discVal)?0:discVal;
+  var disc=discType==='pct'?(sub*discVal/100):(discVal||parseFloat(currentSale.disc)||0);
+  disc=Math.min(Math.max(0,disc),sub);
+  var afterDisc=sub-disc;
+  var baseAfterDisc=parseFloat(currentSale.afterDisc);
+  var baseTax=parseFloat(currentSale.tax);
+  baseAfterDisc=isNaN(baseAfterDisc)?0:baseAfterDisc;
+  baseTax=isNaN(baseTax)?0:baseTax;
+  var taxPct=(baseAfterDisc>0&&baseTax>0)?(baseTax*100/baseAfterDisc):((S.receipt&&S.receipt.showTax)?(parseFloat(S.receipt.taxPct)||0):0);
+  var tax=afterDisc*taxPct/100;
+  var deli=parseFloat(currentSale.deli);
+  deli=isNaN(deli)?0:deli;
+  var total=afterDisc+tax+deli;
+  currentSale.sub=sub;
+  currentSale.disc=disc;
+  currentSale.afterDisc=afterDisc;
+  currentSale.tax=tax;
+  currentSale.afterTax=afterDisc+tax;
+  currentSale.total=total;
+  if(typeof currentSale.transferAmt==='number'&&DIGITAL_PAYS.indexOf(currentSale.pay)!==-1){
+    currentSale.transferChange=Math.max(0,(currentSale.transferAmt||0)-total);
+  }
   save().then(function(){
     notif(t('notif_saved'),'ok');
     resetAfterReceipt();
